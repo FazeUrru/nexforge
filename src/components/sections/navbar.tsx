@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Menu, X, Github, Terminal } from 'lucide-react'
+import { Menu, X, Github, Terminal, ExternalLink } from 'lucide-react'
+
+const GITHUB_REPO_URL = 'https://github.com/nexforge/nexforge'
 
 const navLinks = [
   { href: '#chat', label: 'Chat IA' },
@@ -45,7 +47,7 @@ export function Navbar() {
               Nex<span className="text-gradient">Forge</span>
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#06d6a0]/10 text-[#06d6a0] border border-[#06d6a0]/20">
-              v0.3.0
+              v0.4.0
             </span>
           </a>
 
@@ -65,12 +67,14 @@ export function Navbar() {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
             <a
-              href="https://github.com"
+              href={GITHUB_REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 rounded-lg text-[oklch(0.6_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[oklch(0.6_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all border border-[oklch(0.2_0.03_260)] hover:border-[#06d6a0]/20"
             >
-              <Github className="w-5 h-5" />
+              <Github className="w-4 h-4" />
+              <span className="text-sm font-medium">GitHub</span>
+              <ExternalLink className="w-3 h-3 opacity-50" />
             </a>
             <Button className="bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-semibold hover:shadow-[0_0_30px_rgba(6,214,160,0.3)] transition-all border-0">
               Empezar Gratis
@@ -107,7 +111,17 @@ export function Navbar() {
                   {link.label}
                 </a>
               ))}
-              <div className="pt-2 border-t border-[oklch(0.25_0.04_260)]">
+              <div className="pt-2 border-t border-[oklch(0.25_0.04_260)] space-y-2">
+                <a
+                  href={GITHUB_REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 px-4 py-3 text-[oklch(0.7_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 rounded-lg transition-all"
+                >
+                  <Github className="w-4 h-4" />
+                  Ver en GitHub
+                  <ExternalLink className="w-3 h-3 opacity-50" />
+                </a>
                 <Button className="w-full bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-semibold border-0">
                   Empezar Gratis
                 </Button>

@@ -12,7 +12,13 @@ import {
   Eye,
   Users,
   ArrowRight,
+  ExternalLink,
+  GitCommitHorizontal,
+  Tag,
+  FileCode2,
 } from 'lucide-react'
+
+const GITHUB_REPO_URL = 'https://github.com/nexforge/nexforge'
 
 const stats = [
   { icon: Star, label: 'GitHub Stars', value: '12.4K', color: '#e5c07b' },
@@ -37,6 +43,12 @@ const principles = [
     title: 'Código abierto siempre',
     description: 'Sin open-core, sin features premium ocultas. Todo el código fuente está disponible públicamente en GitHub.',
   },
+]
+
+const recentChanges = [
+  { version: 'v0.4.0', date: 'May 2026', changes: ['Auto-corrección integrada', 'Botones editar/copiar/escuchar', 'Planificación extendida', 'KODA 1.1 · NOVA 0.9 · FLUX 0.7'] },
+  { version: 'v0.3.0', date: 'Abr 2026', changes: ['Planificación en tiempo real', 'Chat a pantalla completa', 'Streaming optimizado', 'KODA 0.9 · NOVA 0.7 · FLUX 0.5'] },
+  { version: 'v0.2.0', date: 'Mar 2026', changes: ['Chat interactivo con IA', '3 modelos disponibles', 'Simulación de streaming', 'Versión inicial OpenSource'] },
 ]
 
 export function OpenSourceSection() {
@@ -108,7 +120,64 @@ export function OpenSourceSection() {
           ))}
         </div>
 
-        {/* CTA */}
+        {/* Changelog / Recent Changes */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-12"
+        >
+          <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <GitCommitHorizontal className="w-5 h-5 text-[#06d6a0]" />
+            Changelog
+          </h3>
+          <div className="space-y-4">
+            {recentChanges.map((release, i) => (
+              <motion.div
+                key={release.version}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                className={`flex items-start gap-4 p-4 rounded-xl border ${
+                  i === 0
+                    ? 'bg-[#06d6a0]/5 border-[#06d6a0]/20'
+                    : 'bg-[oklch(0.1_0.02_260)]/40 border-[oklch(0.2_0.03_260)]'
+                }`}
+              >
+                <div className="flex items-center gap-2 shrink-0 mt-0.5">
+                  <Tag className={`w-4 h-4 ${i === 0 ? 'text-[#06d6a0]' : 'text-[oklch(0.4_0.02_200)]'}`} />
+                  <span className={`font-mono text-sm font-bold ${i === 0 ? 'text-[#06d6a0]' : 'text-[oklch(0.5_0.02_200)]'}`}>
+                    {release.version}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-[oklch(0.4_0.02_200)]">{release.date}</span>
+                    {i === 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#06d6a0]/15 text-[#06d6a0] font-semibold border border-[#06d6a0]/20">
+                        Latest
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {release.changes.map((change) => (
+                      <span
+                        key={change}
+                        className="text-xs text-[oklch(0.6_0.02_200)] px-2 py-0.5 rounded-md bg-[oklch(0.12_0.02_260)] border border-[oklch(0.18_0.02_260)]"
+                      >
+                        {change}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* CTA - GitHub Button */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -116,15 +185,24 @@ export function OpenSourceSection() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-center"
         >
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-[#06d6a0]/30 text-[#06d6a0] hover:bg-[#06d6a0]/10 font-semibold px-8 py-6 group"
+          <a
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            <Github className="w-5 h-5 mr-2" />
-            Ver en GitHub
-            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-[#06d6a0]/30 text-[#06d6a0] hover:bg-[#06d6a0]/10 font-semibold px-8 py-6 group"
+            >
+              <Github className="w-5 h-5 mr-2" />
+              Ver en GitHub
+              <ExternalLink className="w-4 h-4 ml-2 opacity-50 group-hover:opacity-100 transition-opacity" />
+            </Button>
+          </a>
+          <p className="text-xs text-[oklch(0.4_0.02_200)] mt-3">
+            Repositorio OpenSource · MIT License · Auto-actualizado con cada versión
+          </p>
         </motion.div>
       </div>
     </section>

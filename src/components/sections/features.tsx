@@ -39,8 +39,8 @@ const features = [
   },
   {
     icon: GitBranch,
-    title: 'Versionado Inteligente',
-    description: 'Cada cambio se versiona automáticamente. Rollback instantáneo, historial completo y ramas generadas por la IA.',
+    title: 'GitHub Integrado',
+    description: 'Repositorio OpenSource en GitHub con changelog automático, releases versionadas y contribuciones de la comunidad. Botón de redirección directa.',
   },
   {
     icon: Palette,
@@ -64,8 +64,8 @@ const features = [
   },
   {
     icon: RefreshCw,
-    title: 'Hot Reload en Vivo',
-    description: 'Previsualiza los cambios en tiempo real mientras la IA genera tu aplicación. Edita y regenera sin perder contexto.',
+    title: 'Auto-Corrección IA',
+    description: 'La IA detecta y corrige sus propios errores antes de mostrar el resultado. Self-review integrado que verifica imports, tipos y lógica automáticamente.',
   },
   {
     icon: Layout,

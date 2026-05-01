@@ -34,7 +34,7 @@ export function CTASection() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#06d6a0]/10 border border-[#06d6a0]/20 mb-6"
             >
               <Sparkles className="w-4 h-4 text-[#06d6a0]" />
-              <span className="text-sm font-medium text-[#06d6a0]">Sin tarjeta de crédito. Sin límites.</span>
+              <span className="text-sm font-medium text-[#06d6a0]">Sin tarjeta de crédito. Sin límites. Auto-corrección incluida.</span>
             </motion.div>
 
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">

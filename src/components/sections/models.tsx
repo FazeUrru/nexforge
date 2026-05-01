@@ -3,79 +3,79 @@
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Cpu, Brain, Rocket, Code, Layers, Gauge, Check } from 'lucide-react'
+import { Cpu, Brain, Rocket, Code, Layers, Gauge, Check, RefreshCw } from 'lucide-react'
 
 const models = [
   {
     name: 'KODA',
-    version: '0.9',
-    fullName: 'KODA 0.9',
-    tagline: 'El motor full-stack más avanzado',
+    version: '1.1',
+    fullName: 'KODA 1.1',
+    tagline: 'El motor full-stack más avanzado con auto-corrección',
     description:
-      'Nuestro modelo más potente. KODA 0.9 genera aplicaciones web completas con planificación arquitectónica, frontend, backend, base de datos, testing y despliegue en un solo prompt. Ahora con 20B parámetros y 192K de contexto para proyectos de cualquier escala.',
+      'Nuestro modelo más potente. KODA 1.1 genera aplicaciones web completas con planificación arquitectónica, frontend, backend, base de datos, testing y despliegue. Ahora con 24B parámetros, 256K de contexto y auto-corrección integrada que detecta y repara errores antes de mostrar el resultado.',
     color: '#06d6a0',
     gradient: 'from-[#06d6a0] to-[#00ffc8]',
     icon: Cpu,
     features: [
-      'Planificación arquitectónica automática',
-      '20B parámetros — máximo rendimiento',
+      'Auto-corrección inteligente de errores',
+      '24B parámetros — máximo rendimiento',
       'Código production-ready con Zod validation',
       'Testing integrado (Vitest + Playwright)',
       'API REST + GraphQL + WebSockets',
       'Deploy config para Vercel, Docker, AWS',
     ],
     specs: {
-      params: '20B',
-      context: '192K tokens',
-      speed: '65 tok/s',
+      params: '24B',
+      context: '256K tokens',
+      speed: '72 tok/s',
     },
   },
   {
     name: 'NOVA',
-    version: '0.7',
-    fullName: 'NOVA 0.7',
-    tagline: 'Brillante, versátil y ultrarrápido',
+    version: '0.9',
+    fullName: 'NOVA 0.9',
+    tagline: 'Brillante, versátil y auto-mejorable',
     description:
-      'El modelo brillante de NexForge. NOVA 0.7 combina inteligencia contextual avanzada con velocidad de iteración. Ahora con 12B parámetros y 96K de contexto, genera código limpio, bien documentado y listo para producir con explicaciones paso a paso.',
+      'El modelo brillante de NexForge. NOVA 0.9 combina inteligencia contextual avanzada con velocidad de iteración y auto-mejora continua. Ahora con 14B parámetros y 128K de contexto, genera código limpio, bien documentado y listo para producir con explicaciones paso a paso y verificación automática.',
     color: '#00ffc8',
     gradient: 'from-[#00ffc8] to-[#06d6a0]',
     icon: Brain,
     features: [
-      'Generación contextual avanzada',
+      'Auto-mejora continua por prompt',
       'Refactorización inteligente con patrones',
       'Componentes reutilizables + Storybook',
       'Documentación automática JSDoc/TSDoc',
-      'Git workflow integrado',
+      'Verificación de código en tiempo real',
       'Design system generation',
     ],
     specs: {
-      params: '12B',
-      context: '96K tokens',
-      speed: '110 tok/s',
+      params: '14B',
+      context: '128K tokens',
+      speed: '120 tok/s',
     },
   },
   {
     name: 'FLUX',
-    version: '0.5',
-    fullName: 'FLUX 0.5',
-    tagline: 'Velocidad extrema, resultados instantáneos',
+    version: '0.7',
+    fullName: 'FLUX 0.7',
+    tagline: 'Velocidad extrema con self-check integrado',
     description:
-      'Velocidad pura potenciada. FLUX 0.5 ahora con 5B parámetros y 200 tok/s genera MVPs completos y prototipos funcionales en segundos. Perfecto para hackathons, PoCs y cuando necesitas pasar de idea a app funcionando ya.',
+      'Velocidad pura potenciada. FLUX 0.7 ahora con 7B parámetros y 220 tok/s genera MVPs completos y prototipos funcionales en segundos. Incluye self-check automático que verifica imports, tipos y lógica antes de entregar el código.',
     color: '#10b981',
     gradient: 'from-[#10b981] to-[#06d6a0]',
     icon: Rocket,
     features: [
-      'Prototipado ultrarrápido — 200 tok/s',
+      'Self-check automático pre-entrega',
+      'Prototipado ultrarrápido — 220 tok/s',
       'MVP completo en segundos',
       'Live preview con hot-reload',
-      'Snippets optimizados por contexto',
       'Plantillas smart por industria',
       'Zero-config deployment',
     ],
     specs: {
-      params: '5B',
-      context: '64K tokens',
-      speed: '200 tok/s',
+      params: '7B',
+      context: '80K tokens',
+      speed: '220 tok/s',
     },
   },
 ]
@@ -108,15 +108,15 @@ export function ModelsSection() {
         >
           <Badge className="bg-[#06d6a0]/10 text-[#06d6a0] border-[#06d6a0]/20 mb-4">
             <Layers className="w-3 h-3 mr-1" />
-            3 Modelos de IA
+            3 Modelos de IA con Auto-Corrección
           </Badge>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
             Tres motores,{' '}
             <span className="text-gradient">poder infinito</span>
           </h2>
           <p className="text-lg text-[oklch(0.6_0.02_200)] max-w-2xl mx-auto">
-            Cada modelo está optimizado para un propósito. Elige el que mejor se adapte
-            a tu proyecto o combínalos para resultados extraordinarios.
+            Cada modelo está optimizado para un propósito y todos incluyen auto-corrección.
+            Elige el que mejor se adapte a tu proyecto o combínalos para resultados extraordinarios.
           </p>
         </motion.div>
 

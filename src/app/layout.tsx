@@ -14,16 +14,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NexForge v0.3.0 — IA OpenSource para Crear Apps Web",
-  description: "Plataforma 100% gratis, ilimitada y OpenSource impulsada por IA. Crea aplicaciones web completas con KODA 0.9, NOVA 0.7 y FLUX 0.5 — sin restricciones.",
-  keywords: ["NexForge", "IA", "OpenSource", "generador de apps", "KODA", "NOVA", "FLUX", "aplicaciones web", "gratis", "ilimitado"],
+  title: "NexForge v0.4.0 — IA OpenSource con Auto-Corrección para Crear Apps Web",
+  description: "Plataforma 100% gratis, ilimitada y OpenSource impulsada por IA. Crea aplicaciones web completas con KODA 1.1, NOVA 0.9 y FLUX 0.7 — auto-corrección integrada, sin restricciones.",
+  keywords: ["NexForge", "IA", "OpenSource", "generador de apps", "KODA", "NOVA", "FLUX", "auto-corrección", "aplicaciones web", "gratis", "ilimitado"],
   authors: [{ name: "NexForge Team" }],
   icons: {
     icon: "/logo-nexforge.png",
   },
   openGraph: {
-    title: "NexForge v0.3.0 — IA OpenSource para Crear Apps Web",
-    description: "100% Gratis · Ilimitado · OpenSource · Crea apps web completas con IA",
+    title: "NexForge v0.4.0 — IA OpenSource con Auto-Corrección para Crear Apps Web",
+    description: "100% Gratis · Ilimitado · OpenSource · Auto-Corrección · Crea apps web completas con IA",
     type: "website",
   },
 };
