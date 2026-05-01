@@ -4,13 +4,17 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Sparkles, Zap, Infinity, Users } from 'lucide-react'
 
+const heroBgPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/nexforge')
+  ? '/nexforge/hero-bg.png'
+  : '/hero-bg.png'
+
 export function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 bg-grid" />
       <div
         className="absolute inset-0 opacity-30"
-        style={{ backgroundImage: 'url(/hero-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}
+        style={{ backgroundImage: `url(${heroBgPath})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[oklch(0.08_0.02_260)]/60 via-transparent to-[oklch(0.08_0.02_260)]" />
 
