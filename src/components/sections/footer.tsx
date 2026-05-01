@@ -87,7 +87,7 @@ export function Footer() {
           </p>
           <div className="flex items-center gap-3 text-xs text-[oklch(0.4_0.02_200)]">
             <span className="font-mono px-2 py-1 rounded bg-[oklch(0.15_0.03_260)] border border-[oklch(0.2_0.03_260)]">
-              v0.2.0
+              v0.3.0
             </span>
             <span className="font-mono px-2 py-1 rounded bg-[#06d6a0]/10 border border-[#06d6a0]/20 text-[#06d6a0]">
               OpenSource

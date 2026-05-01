@@ -127,3 +127,37 @@ Stage Summary:
 - Streaming simulado ultra rápido (8-16ms por palabra)
 - Chat a pantalla completa funcional
 - API testada y verificada
+
+---
+Task ID: 5
+Agent: main
+Task: Planificación larga, corregir error conexión, nuevas versiones, IA más inteligente
+
+Work Log:
+- Corregido error 'Error de conexión': API ahora tiene reintentos (2 retries), timeout 120s en cliente
+- API con callAIWithRetry() para reintentar automáticamente si falla
+- maxDuration subido a 120s para requests largos
+- dynamic = 'force-dynamic' para evitar caching
+- Planificación en tiempo real más larga: 7 pasos con 3.5s cada uno (~25s total)
+- Cada paso tiene icono, texto y detalle descriptivo
+- Barra de progreso con contador numérico
+- Plan se mantiene visible durante toda la generación
+- Nuevas versiones de modelos:
+  - KODA 0.7 → 0.9 (20B params, 192K context, 65 tok/s)
+  - NOVA 0.5 → 0.7 (12B params, 96K context, 110 tok/s)
+  - FLUX 0.3 → 0.5 (5B params, 64K context, 200 tok/s)
+- System prompts mejorados con estructura de planificación:
+  - KODA: Plan → Architecture → Implementation → Deployment → Summary
+  - NOVA: Plan → Design → Code → Next Steps
+  - FLUX: Plan → Code → Run
+- NexForge v0.2.0 → v0.3.0 (navbar, hero, layout, footer, package.json)
+- Velocidad streaming: FLUX 6ms, NOVA 10ms, KODA 14ms por palabra
+- Lint pasado sin errores
+- API testada y verificada con modelo koda-0.9
+
+Stage Summary:
+- Bug conexión corregido con reintentos y timeout largo
+- Planificación en tiempo real de ~25 segundos con 7 pasos detallados
+- Todas las versiones actualizadas: KODA 0.9, NOVA 0.7, FLUX 0.5
+- NexForge v0.3.0
+- IA más inteligente con prompts estructurados de planificación

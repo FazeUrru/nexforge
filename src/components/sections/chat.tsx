@@ -5,27 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  Cpu,
-  Brain,
-  Rocket,
-  Send,
-  RotateCcw,
-  Sparkles,
-  Trash2,
-  ChevronDown,
-  Bot,
-  User,
-  X,
-  Maximize2,
-  Minimize2,
-  MessageSquare,
-  Zap,
-  CheckCircle2,
-  Circle,
-  Loader2,
-  Code2,
-  LayoutList,
-  Play,
+  Cpu, Brain, Rocket, Send, RotateCcw, Sparkles, Trash2,
+  ChevronDown, Bot, User, X, Maximize2, Minimize2,
+  Zap, CheckCircle2, Circle, Loader2, Code2, LayoutList, Play,
+  FileCode2, Database, Shield, Palette, Server, RocketIcon,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 
@@ -39,7 +22,9 @@ interface Message {
 
 interface PlanStep {
   id: number
+  icon: typeof Cpu
   text: string
+  detail: string
   status: 'pending' | 'active' | 'done'
 }
 
@@ -51,35 +36,43 @@ interface ModelOption {
   color: string
   description: string
   speed: string
+  params: string
+  context: string
 }
 
 const models: ModelOption[] = [
   {
-    key: 'koda-0.7',
+    key: 'koda-0.9',
     name: 'KODA',
-    version: '0.7',
+    version: '0.9',
     icon: Cpu,
     color: '#06d6a0',
-    description: 'Full-stack potente',
-    speed: '45 tok/s',
+    description: 'Full-stack avanzado',
+    speed: '65 tok/s',
+    params: '20B',
+    context: '192K',
   },
   {
-    key: 'nova-0.5',
+    key: 'nova-0.7',
     name: 'NOVA',
-    version: '0.5',
+    version: '0.7',
     icon: Brain,
     color: '#00ffc8',
-    description: 'Equilibrado y versátil',
-    speed: '82 tok/s',
+    description: 'Equilibrado y brillante',
+    speed: '110 tok/s',
+    params: '12B',
+    context: '96K',
   },
   {
-    key: 'flux-0.3',
+    key: 'flux-0.5',
     name: 'FLUX',
-    version: '0.3',
+    version: '0.5',
     icon: Rocket,
     color: '#10b981',
     description: 'Velocidad extrema',
-    speed: '150 tok/s',
+    speed: '200 tok/s',
+    params: '5B',
+    context: '64K',
   },
 ]
 
@@ -92,8 +85,26 @@ const suggestedPrompts = [
   { icon: '🎨', text: 'Haz un portfolio con animaciones y dark mode' },
 ]
 
+// Full planning steps for app creation
+const appPlanSteps: PlanStep[] = [
+  { id: 1, icon: LayoutList, text: 'Analizando requisitos', detail: 'Detectando tipo de app, features y stack...', status: 'pending' },
+  { id: 2, icon: Database, text: 'Diseñando modelo de datos', detail: 'Tablas, relaciones, índices, migraciones...', status: 'pending' },
+  { id: 3, icon: Shield, text: 'Configurando autenticación', detail: 'NextAuth, OAuth, sesiones, roles...', status: 'pending' },
+  { id: 4, icon: Server, text: 'Creando API routes', detail: 'Endpoints REST, validación, middleware...', status: 'pending' },
+  { id: 5, icon: Palette, text: 'Construyendo componentes UI', detail: 'Layouts, páginas, forms, modales...', status: 'pending' },
+  { id: 6, icon: FileCode2, text: 'Implementando lógica de negocio', detail: 'Servicios, utils, hooks, state...', status: 'pending' },
+  { id: 7, icon: RocketIcon, text: 'Finalizando y documentando', detail: 'Deploy config, README, tests...', status: 'pending' },
+]
+
+const simplePlanSteps: PlanStep[] = [
+  { id: 1, icon: LayoutList, text: 'Procesando solicitud', detail: 'Analizando el mensaje...', status: 'pending' },
+  { id: 2, icon: FileCode2, text: 'Generando respuesta', detail: 'Pensando la mejor solución...', status: 'pending' },
+]
+
+const NEXFORGE_VERSION = '0.3.0'
+
 export function ChatSection() {
-  const [selectedModel, setSelectedModel] = useState<string>('koda-0.7')
+  const [selectedModel, setSelectedModel] = useState<string>('koda-0.9')
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -101,9 +112,11 @@ export function ChatSection() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [planSteps, setPlanSteps] = useState<PlanStep[]>([])
   const [showPlan, setShowPlan] = useState(false)
+  const [currentPlanStep, setCurrentPlanStep] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const currentModel = models.find((m) => m.key === selectedModel)!
 
@@ -134,11 +147,17 @@ export function ChatSection() {
     return () => { document.body.style.overflow = '' }
   }, [isFullscreen])
 
-  // Simulate streaming: reveal text word by word at high speed
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current)
+    }
+  }, [])
+
   const simulateStreaming = useCallback((fullText: string, messageId: string) => {
-    const words = fullText.split(/(\s+)/) // split keeping whitespace
+    const words = fullText.split(/(\s+)/)
     let current = 0
-    const speed = selectedModel === 'flux-0.3' ? 8 : selectedModel === 'nova-0.5' ? 12 : 16
+    const speed = selectedModel === 'flux-0.5' ? 6 : selectedModel === 'nova-0.7' ? 10 : 14
 
     const interval = setInterval(() => {
       current += 1
@@ -152,59 +171,64 @@ export function ChatSection() {
       )
       if (current >= words.length) {
         clearInterval(interval)
+        streamingIntervalRef.current = null
         setMessages((prev) =>
-          prev.map((m) =>
-            m.id === messageId ? { ...m, isStreaming: false } : m
-          )
+          prev.map((m) => m.id === messageId ? { ...m, isStreaming: false } : m)
         )
         setPlanSteps((prev) => prev.map((s) => ({ ...s, status: 'done' as const })))
+        setShowPlan(false)
       }
     }, speed)
 
+    streamingIntervalRef.current = interval
     return interval
   }, [selectedModel])
 
-  // Show plan steps progressively
-  const simulatePlan = useCallback((userMessage: string): PlanStep[] => {
-    const lowerMsg = userMessage.toLowerCase()
-    const steps: PlanStep[] = []
-
-    if (lowerMsg.includes('app') || lowerMsg.includes('aplicaci') || lowerMsg.includes('crea') || lowerMsg.includes('genera') || lowerMsg.includes('haz') || lowerMsg.includes('web') || lowerMsg.includes('api') || lowerMsg.includes('blog') || lowerMsg.includes('dashboard') || lowerMsg.includes('ecommerce') || lowerMsg.includes('e-commerce') || lowerMsg.includes('tareas') || lowerMsg.includes('portfolio') || lowerMsg.includes('reserva')) {
-      steps.push({ id: 1, text: 'Analizando requisitos del proyecto...', status: 'active' })
-      steps.push({ id: 2, text: 'Diseñando arquitectura y modelo de datos...', status: 'pending' })
-      steps.push({ id: 3, text: 'Configurando stack tecnológico...', status: 'pending' })
-      steps.push({ id: 4, text: 'Generando código del proyecto...', status: 'pending' })
-      steps.push({ id: 5, text: 'Implementando lógica de negocio...', status: 'pending' })
-      steps.push({ id: 6, text: 'Finalizando y documentando...', status: 'pending' })
-    } else {
-      steps.push({ id: 1, text: 'Procesando solicitud...', status: 'active' })
-      steps.push({ id: 2, text: 'Generando respuesta...', status: 'pending' })
-    }
-
-    return steps
+  const isAppRequest = useCallback((text: string): boolean => {
+    const lower = text.toLowerCase()
+    const appKeywords = [
+      'app', 'aplicaci', 'crea', 'genera', 'haz', 'web', 'api', 'blog',
+      'dashboard', 'ecommerce', 'e-commerce', 'tareas', 'portfolio', 'reserva',
+      'tienda', 'store', 'shop', 'red social', 'chat', 'foro', 'crm', 'erp',
+      'landing', 'saas', 'clone', 'clon', 'plataforma', 'sistema', 'proyecto',
+      'site', 'página', 'pagina', 'website', 'crud', 'login', 'auth',
+    ]
+    return appKeywords.some((kw) => lower.includes(kw))
   }, [])
 
-  // Progress through plan steps
-  const progressPlan = useCallback((steps: PlanStep[]) => {
-    setPlanSteps(steps)
+  const startPlanAnimation = useCallback((steps: PlanStep[]) => {
+    setPlanSteps(steps.map((s) => ({ ...s, status: 'pending' as const })))
+    setCurrentPlanStep(0)
     setShowPlan(true)
 
-    let currentStep = 0
-    const stepInterval = setInterval(() => {
-      currentStep++
-      setPlanSteps((prev) =>
-        prev.map((s, i) => ({
-          ...s,
-          status: i < currentStep ? 'done' as const : i === currentStep ? 'active' as const : 'pending' as const,
-        }))
-      )
-      if (currentStep >= steps.length) {
-        clearInterval(stepInterval)
-      }
-    }, 600)
-
-    return stepInterval
+    // Mark first as active immediately
+    setPlanSteps((prev) => prev.map((s, i) => i === 0 ? { ...s, status: 'active' as const } : s))
+    setCurrentPlanStep(1)
   }, [])
+
+  // Advance plan steps on a longer timer while waiting for AI
+  useEffect(() => {
+    if (!showPlan || !isLoading || planSteps.length === 0) return
+
+    const timer = setInterval(() => {
+      setCurrentPlanStep((prev) => {
+        const next = prev + 1
+        if (next > planSteps.length) {
+          clearInterval(timer)
+          return prev
+        }
+        setPlanSteps((steps) =>
+          steps.map((s, i) => ({
+            ...s,
+            status: i < next - 1 ? 'done' as const : i === next - 1 ? 'active' as const : 'pending' as const,
+          }))
+        )
+        return next
+      })
+    }, 3500) // Each step takes 3.5 seconds - long enough to feel real
+
+    return () => clearInterval(timer)
+  }, [showPlan, isLoading, planSteps.length])
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
@@ -220,13 +244,12 @@ export function ChatSection() {
     setInput('')
     setIsLoading(true)
 
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-    }
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
 
-    // Start planning animation
-    const planStepsList = simulatePlan(input.trim())
-    const planInterval = progressPlan(planStepsList)
+    // Start planning
+    const isApp = isAppRequest(input.trim())
+    const steps = isApp ? appPlanSteps : simplePlanSteps
+    startPlanAnimation(steps)
 
     // Add empty assistant message
     setMessages((prev) => [
@@ -240,43 +263,59 @@ export function ChatSection() {
         content: m.content,
       }))
 
+      const controller = new AbortController()
+      // 120 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 120000)
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: chatMessages,
-          model: selectedModel,
-        }),
+        body: JSON.stringify({ messages: chatMessages, model: selectedModel }),
+        signal: controller.signal,
       })
 
+      clearTimeout(timeoutId)
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Error de conexión' }))
-        throw new Error(errorData.error || 'Error en la respuesta')
+        let errorMsg = 'Error del servidor'
+        try {
+          const errData = await response.json()
+          errorMsg = errData.error || errorMsg
+        } catch {
+          // JSON parse failed
+        }
+        throw new Error(errorMsg)
       }
 
       const data = await response.json()
-      clearInterval(planInterval)
 
-      // Mark all plan steps as done
+      if (!data.message || data.message.trim().length === 0) {
+        throw new Error('La IA devolvió una respuesta vacía. Intenta de nuevo.')
+      }
+
+      // Mark all plan steps done
       setPlanSteps((prev) => prev.map((s) => ({ ...s, status: 'done' as const })))
 
       // Start streaming simulation
       simulateStreaming(data.message, assistantId)
     } catch (error) {
-      clearInterval(planInterval)
-      setPlanSteps([])
-      setShowPlan(false)
+      // Don't clear plan on abort if user stopped it
+      const isAbort = error instanceof Error && error.name === 'AbortError'
+      if (!isAbort) {
+        setPlanSteps([])
+        setShowPlan(false)
+      }
+
       setMessages((prev) => {
         const filtered = prev.filter((m) => m.id !== assistantId)
+        const errText = isAbort
+          ? 'Generación cancelada.'
+          : error instanceof Error
+            ? error.message
+            : 'No se pudo conectar con la IA. Reintentando...'
         return [
           ...filtered,
-          {
-            id: assistantId,
-            role: 'assistant',
-            content: `Error: ${error instanceof Error ? error.message : 'No se pudo conectar. Inténtalo de nuevo.'}`,
-            model: currentModel.name,
-            isStreaming: false,
-          },
+          { id: assistantId, role: 'assistant', content: errText, model: currentModel.name, isStreaming: false },
         ]
       })
     } finally {
@@ -308,9 +347,18 @@ export function ChatSection() {
     setInput('')
     setPlanSteps([])
     setShowPlan(false)
+    setCurrentPlanStep(0)
+    if (streamingIntervalRef.current) {
+      clearInterval(streamingIntervalRef.current)
+      streamingIntervalRef.current = null
+    }
   }
 
   const handleRetry = async () => {
+    if (streamingIntervalRef.current) {
+      clearInterval(streamingIntervalRef.current)
+      streamingIntervalRef.current = null
+    }
     const lastUserIdx = [...messages].reverse().findIndex((m) => m.role === 'user')
     if (lastUserIdx === -1) return
     const actualIdx = messages.length - 1 - lastUserIdx
@@ -319,6 +367,7 @@ export function ChatSection() {
     setMessages(trimmed)
     setPlanSteps([])
     setShowPlan(false)
+    setIsLoading(false)
     if (lastUserMsg) {
       setInput(lastUserMsg.content)
       setTimeout(() => {
@@ -352,7 +401,7 @@ export function ChatSection() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -5, scale: 0.95 }}
                   transition={{ duration: 0.12 }}
-                  className="absolute top-full left-0 mt-2 w-72 rounded-xl border border-[oklch(0.25_0.04_260)] bg-[oklch(0.1_0.02_260)] shadow-2xl overflow-hidden z-50"
+                  className="absolute top-full left-0 mt-2 w-80 rounded-xl border border-[oklch(0.25_0.04_260)] bg-[oklch(0.1_0.02_260)] shadow-2xl overflow-hidden z-50"
                 >
                   {models.map((model) => (
                     <button
@@ -366,12 +415,15 @@ export function ChatSection() {
                           <span className="text-sm font-bold" style={{ color: model.color }}>{model.name}</span>
                           <span className="text-xs text-[oklch(0.4_0.02_200)] font-mono">v{model.version}</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3 mt-0.5">
                           <span className="text-xs text-[oklch(0.5_0.02_200)]">{model.description}</span>
-                          <span className="text-[10px] font-mono" style={{ color: model.color }}>{model.speed}</span>
+                          <span className="text-[10px] font-mono" style={{ color: model.color }}>{model.params} · {model.context}</span>
                         </div>
                       </div>
-                      {selectedModel === model.key && <div className="ml-auto w-2 h-2 rounded-full" style={{ backgroundColor: model.color }} />}
+                      <div className="text-right">
+                        <span className="text-[10px] font-mono" style={{ color: model.color }}>{model.speed}</span>
+                      </div>
+                      {selectedModel === model.key && <div className="ml-1 w-2 h-2 rounded-full" style={{ backgroundColor: model.color }} />}
                     </button>
                   ))}
                 </motion.div>
@@ -412,10 +464,10 @@ export function ChatSection() {
               <Sparkles className="w-10 h-10 text-[#06d6a0]" />
             </div>
             <h3 className="text-2xl font-bold mb-2">
-              Hola, soy <span style={{ color: currentModel.color }}>{currentModel.name}</span>
+              Hola, soy <span style={{ color: currentModel.color }}>{currentModel.name} v{currentModel.version}</span>
             </h3>
             <p className="text-[oklch(0.5_0.02_200)] mb-8 max-w-md text-sm">
-              Describe la app que quieres crear. Planificaré, diseñaré y generaré el código completo en tiempo real.
+              Describe la app que quieres crear. Planificaré cada paso, diseñaré la arquitectura y generaré el código completo en tiempo real.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl">
               {suggestedPrompts.map((prompt) => (
@@ -482,7 +534,7 @@ export function ChatSection() {
                   {message.role === 'assistant' && message.model && !message.isStreaming && message.content && (
                     <p className="text-[10px] text-[oklch(0.35_0.02_200)] mt-2 font-mono flex items-center gap-1">
                       <Zap className="w-2.5 h-2.5" />
-                      {message.model} · NexForge v0.2.0
+                      {message.model} · NexForge v{NEXFORGE_VERSION}
                     </p>
                   )}
                 </div>
@@ -494,38 +546,47 @@ export function ChatSection() {
               </motion.div>
             ))}
 
-            {/* Plan progress indicator */}
-            {showPlan && planSteps.length > 0 && isLoading && (
+            {/* Plan progress */}
+            {showPlan && planSteps.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="max-w-md mx-auto"
+                className="max-w-lg mx-auto"
               >
-                <div className="rounded-xl bg-[oklch(0.1_0.02_260)] border border-[#06d6a0]/15 p-4 space-y-2">
+                <div className="rounded-xl bg-[oklch(0.1_0.02_260)] border border-[#06d6a0]/15 p-4 space-y-2.5">
                   <div className="flex items-center gap-2 mb-3">
                     <LayoutList className="w-4 h-4 text-[#06d6a0]" />
-                    <span className="text-xs font-bold text-[#06d6a0] uppercase tracking-wider">Planificando</span>
-                    <div className="flex-1 h-1 bg-[oklch(0.15_0.03_260)] rounded-full overflow-hidden ml-2">
+                    <span className="text-xs font-bold text-[#06d6a0] uppercase tracking-wider">
+                      {isLoading ? 'Planificando' : 'Completado'}
+                    </span>
+                    <div className="flex-1 h-1.5 bg-[oklch(0.15_0.03_260)] rounded-full overflow-hidden ml-2">
                       <motion.div
                         className="h-full bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] rounded-full"
-                        initial={{ width: '0%' }}
                         animate={{ width: `${(planSteps.filter(s => s.status === 'done').length / planSteps.length) * 100}%` }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.5 }}
                       />
                     </div>
+                    <span className="text-[10px] font-mono text-[#06d6a0]">
+                      {planSteps.filter(s => s.status === 'done').length}/{planSteps.length}
+                    </span>
                   </div>
                   {planSteps.map((step) => (
-                    <div key={step.id} className="flex items-center gap-2">
+                    <div key={step.id} className="flex items-start gap-2.5">
                       {step.status === 'done' ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#06d6a0] shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-[#06d6a0] shrink-0 mt-0.5" />
                       ) : step.status === 'active' ? (
-                        <Loader2 className="w-3.5 h-3.5 text-[#06d6a0] animate-spin shrink-0" />
+                        <Loader2 className="w-4 h-4 text-[#06d6a0] animate-spin shrink-0 mt-0.5" />
                       ) : (
-                        <Circle className="w-3.5 h-3.5 text-[oklch(0.3_0.02_260)] shrink-0" />
+                        <Circle className="w-4 h-4 text-[oklch(0.25_0.02_260)] shrink-0 mt-0.5" />
                       )}
-                      <span className={`text-xs ${step.status === 'done' ? 'text-[oklch(0.6_0.02_200)]' : step.status === 'active' ? 'text-[#06d6a0] font-medium' : 'text-[oklch(0.35_0.02_200)]'}`}>
-                        {step.text}
-                      </span>
+                      <div>
+                        <span className={`text-xs font-medium ${step.status === 'done' ? 'text-[oklch(0.6_0.02_200)]' : step.status === 'active' ? 'text-[#06d6a0]' : 'text-[oklch(0.35_0.02_200)]'}`}>
+                          {step.text}
+                        </span>
+                        {step.status === 'active' && (
+                          <p className="text-[10px] text-[oklch(0.4_0.02_200)] mt-0.5">{step.detail}</p>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -546,7 +607,7 @@ export function ChatSection() {
               value={input}
               onChange={handleTextareaInput}
               onKeyDown={handleKeyDown}
-              placeholder={`Pídele a ${currentModel.name} que cree tu app...`}
+              placeholder={`Pídele a ${currentModel.name} v${currentModel.version} que cree tu app...`}
               className="min-h-[46px] max-h-[150px] resize-none bg-[oklch(0.12_0.02_260)] border-[oklch(0.25_0.04_260)] focus:border-[#06d6a0]/40 focus:ring-[#06d6a0]/20 text-sm rounded-xl pr-4 placeholder:text-[oklch(0.4_0.02_200)]"
               rows={1}
               disabled={isLoading}
@@ -554,7 +615,7 @@ export function ChatSection() {
           </div>
           {isLoading ? (
             <Button
-              onClick={() => { setPlanSteps([]); setShowPlan(false) }}
+              onClick={handleClear}
               className="bg-red-500/80 hover:bg-red-500 text-white font-semibold border-0 rounded-xl h-[46px] w-[46px] p-0 transition-all shrink-0"
             >
               <X className="w-5 h-5" />
@@ -575,7 +636,7 @@ export function ChatSection() {
           </p>
           <div className="flex items-center gap-2 text-[10px] text-[oklch(0.3_0.02_200)]">
             <Code2 className="w-3 h-3" />
-            <span>NexForge v0.2.0</span>
+            <span>NexForge v{NEXFORGE_VERSION}</span>
             <span>·</span>
             <span>100% Gratis</span>
             <span>·</span>
@@ -621,7 +682,6 @@ export function ChatSection() {
             Pídele que cree una app y la IA planificará, diseñará y codificará en tiempo real.
           </p>
         </motion.div>
-
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
