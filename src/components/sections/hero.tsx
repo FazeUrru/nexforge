@@ -2,20 +2,15 @@
 
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Sparkles, Zap, Infinity } from 'lucide-react'
+import { ArrowRight, Sparkles, Zap, Infinity, Users } from 'lucide-react'
 
 export function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background layers */}
       <div className="absolute inset-0 bg-grid" />
       <div
         className="absolute inset-0 opacity-30"
-        style={{
-          backgroundImage: 'url(/hero-bg.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
+        style={{ backgroundImage: 'url(/hero-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[oklch(0.08_0.02_260)]/60 via-transparent to-[oklch(0.08_0.02_260)]" />
 
@@ -24,9 +19,7 @@ export function Hero() {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00ffc8]/3 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#06d6a0]/2 rounded-full blur-[120px]" />
 
-      {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center">
-        {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -34,10 +27,9 @@ export function Hero() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#06d6a0]/10 border border-[#06d6a0]/20 mb-8"
         >
           <Sparkles className="w-4 h-4 text-[#06d6a0]" />
-          <span className="text-sm font-medium text-[#06d6a0]">v0.4.0 — Auto-Corrección · OpenSource · 100% Gratis</span>
+          <span className="text-sm font-medium text-[#06d6a0]">v0.5.0 — 4 Agentes IA · Vista Previa · Publicar · OpenSource</span>
         </motion.div>
 
-        {/* Main headline */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -47,24 +39,22 @@ export function Hero() {
           Crea apps web{' '}
           <span className="text-gradient">completas</span>
           <br />
-          con Inteligencia Artificial
+          con 4 Agentes IA
         </motion.h1>
 
-        {/* Subtitle */}
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-lg sm:text-xl text-[oklch(0.6_0.02_200)] max-w-2xl mx-auto mb-10 leading-relaxed"
         >
-          Tres modelos de IA potentes con auto-corrección. Sin restricciones de uso. Sin límites.
-          Sin costes. OpenSource para siempre. Genera aplicaciones web completas
-          en segundos con <strong className="text-[#06d6a0]">KODA 1.1</strong>,{' '}
-          <strong className="text-[#00ffc8]">NOVA 0.9</strong> y{' '}
-          <strong className="text-[#10b981]">FLUX 0.7</strong>.
+          <strong className="text-[#8b5cf6]">ARQ</strong> diseña,{' '}
+          <strong className="text-[#06d6a0]">CODE</strong> implementa,{' '}
+          <strong className="text-[#f59e0b]">QA</strong> verifica y{' '}
+          <strong className="text-[#ec4899]">UX</strong> optimiza. Vista previa del código,
+          sugerencias de mejora y publicación con un clic. Todo gratis e ilimitado.
         </motion.p>
 
-        {/* CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -87,7 +77,6 @@ export function Hero() {
           </Button>
         </motion.div>
 
-        {/* Stats bar */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -95,7 +84,7 @@ export function Hero() {
           className="flex flex-wrap items-center justify-center gap-6 sm:gap-10"
         >
           {[
-            { icon: Zap, label: 'Generación instantánea', value: '<3s' },
+            { icon: Users, label: 'Agentes especializados', value: '4' },
             { icon: Infinity, label: 'Uso ilimitado', value: 'Sin límites' },
             { icon: Sparkles, label: 'Apps generadas', value: '50K+' },
           ].map((stat) => (
@@ -108,7 +97,6 @@ export function Hero() {
         </motion.div>
       </div>
 
-      {/* Bottom gradient fade */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[oklch(0.08_0.02_260)] to-transparent" />
     </section>
   )

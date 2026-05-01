@@ -2,24 +2,40 @@
 
 import { motion } from 'framer-motion'
 import {
-  Code2,
-  Database,
-  Shield,
-  Globe,
-  GitBranch,
-  Palette,
-  Server,
-  Lock,
-  Zap,
-  RefreshCw,
-  Layout,
-  Smartphone,
+  Code2, Database, Shield, Globe, GitBranch, Palette,
+  Server, Lock, Zap, RefreshCw, Layout, Smartphone,
+  Eye, Lightbulb, Users, Layers, Clock, RocketIcon, TestTube2, Paintbrush,
 } from 'lucide-react'
 
 const features = [
   {
+    icon: Users,
+    title: '4 Agentes Especializados',
+    description: 'ARQ (Arquitecto), CODE (Programador), QA (Calidad) y UX (Diseño) trabajan en tiempo real coordinados para crear tu app completa.',
+  },
+  {
+    icon: Eye,
+    title: 'Vista Previa del Código',
+    description: 'Visualiza el código generado con syntax highlighting, navegación entre archivos y vista en tiempo real mientras los agentes trabajan.',
+  },
+  {
+    icon: Globe,
+    title: 'Botón Publicar',
+    description: 'Publica tu app directamente en Vercel con un solo clic. Deploy automático con progreso en tiempo real y URL pública instantánea.',
+  },
+  {
+    icon: Lightbulb,
+    title: 'Sugerencias de Mejora',
+    description: 'Después de generar tu app, la IA sugiere mejoras específicas: nuevas features, optimizaciones de rendimiento, mejoras de UX y más.',
+  },
+  {
+    icon: Clock,
+    title: 'Fases Adaptativas',
+    description: 'La duración de cada fase se adapta a la complejidad de tu prompt. Desde segundos para consultas simples hasta 5+ minutos para apps enterprise.',
+  },
+  {
     icon: Code2,
-    title: 'Código Limpio',
+    title: 'Código Limpio y Completo',
     description: 'Generación de código siguiendo las mejores prácticas de la industria, tipado fuerte con TypeScript, y estructura modular mantenible.',
   },
   {
@@ -33,39 +49,14 @@ const features = [
     description: 'Autenticación, autorización, sanitización de inputs y protección CSRF incluidas en cada proyecto generado automáticamente.',
   },
   {
-    icon: Globe,
-    title: 'Despliegue Inmediato',
-    description: 'Exporta tu app lista para Vercel, Netlify, Docker o cualquier plataforma. Configuración CI/CD generada automáticamente.',
-  },
-  {
     icon: GitBranch,
     title: 'GitHub Integrado',
-    description: 'Repositorio OpenSource en GitHub con changelog automático, releases versionadas y contribuciones de la comunidad. Botón de redirección directa.',
-  },
-  {
-    icon: Palette,
-    title: 'UI/UX Profesional',
-    description: 'Componentes shadcn/ui, Tailwind CSS, diseño responsive y accesible por defecto. Temas personalizables al instante.',
-  },
-  {
-    icon: Server,
-    title: 'API Routes Automáticas',
-    description: 'Endpoints REST y GraphQL generados a partir de tu esquema de datos. Validación, documentación y tests incluidos.',
-  },
-  {
-    icon: Lock,
-    title: '100% OpenSource',
-    description: 'Código abierto bajo licencia MIT. Sin lock-in, sin dependencias propietarias. Tú posees todo el código generado.',
-  },
-  {
-    icon: Zap,
-    title: 'Ilimitado y Gratis',
-    description: 'Sin planes de pago, sin límites de uso, sin restricciones de funcionalidad. Usa NexForge todo lo que necesites.',
+    description: 'Repositorio OpenSource en GitHub con changelog automático, releases versionadas y contribuciones de la comunidad.',
   },
   {
     icon: RefreshCw,
     title: 'Auto-Corrección IA',
-    description: 'La IA detecta y corrige sus propios errores antes de mostrar el resultado. Self-review integrado que verifica imports, tipos y lógica automáticamente.',
+    description: 'La IA detecta y corrige sus propios errores antes de mostrar el resultado. Self-review integrado que verifica imports, tipos y lógica.',
   },
   {
     icon: Layout,
@@ -73,18 +64,15 @@ const features = [
     description: 'Frontend, backend, base de datos, autenticación, APIs, testing y despliegue. Todo incluido en un solo flujo.',
   },
   {
-    icon: Smartphone,
-    title: 'Responsive Nativo',
-    description: 'Todas las apps generadas son responsive por defecto. Adaptables a móvil, tablet y escritorio sin configuración extra.',
+    icon: Lock,
+    title: '100% OpenSource',
+    description: 'Código abierto bajo licencia MIT. Sin lock-in, sin dependencias propietarias. Tú posees todo el código generado.',
   },
 ]
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08 },
-  },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
 }
 
 const itemVariants = {
@@ -97,7 +85,6 @@ export function FeaturesSection() {
     <section id="features" className="relative py-24 md:py-32">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#06d6a0]/20 to-transparent" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -110,12 +97,11 @@ export function FeaturesSection() {
             <span className="text-gradient">nada que pagar</span>
           </h2>
           <p className="text-lg text-[oklch(0.6_0.02_200)] max-w-2xl mx-auto">
-            NexForge incluye todas las herramientas profesionales para crear aplicaciones
-            web completas. Sin planes premium, sin features bloqueadas.
+            NexForge incluye 4 agentes especializados, vista previa, publicación automática
+            y sugerencias de mejora. Sin planes premium, sin features bloqueadas.
           </p>
         </motion.div>
 
-        {/* Features grid */}
         <motion.div
           variants={containerVariants}
           initial="hidden"

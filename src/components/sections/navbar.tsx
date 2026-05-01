@@ -47,7 +47,7 @@ export function Navbar() {
               Nex<span className="text-gradient">Forge</span>
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#06d6a0]/10 text-[#06d6a0] border border-[#06d6a0]/20">
-              v0.4.0
+              v0.5.0
             </span>
           </a>
 

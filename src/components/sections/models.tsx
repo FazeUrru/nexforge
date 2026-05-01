@@ -3,95 +3,102 @@
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Cpu, Brain, Rocket, Code, Layers, Gauge, Check, RefreshCw } from 'lucide-react'
+import { Cpu, Brain, Rocket, Code, Layers, Gauge, Check, RefreshCw, Users, Eye, Paintbrush, TestTube2 } from 'lucide-react'
 
 const models = [
   {
     name: 'KODA',
-    version: '1.1',
-    fullName: 'KODA 1.1',
-    tagline: 'El motor full-stack más avanzado con auto-corrección',
+    version: '1.3',
+    fullName: 'KODA 1.3',
+    tagline: 'El motor full-stack más avanzado con 4 agentes especializados',
     description:
-      'Nuestro modelo más potente. KODA 1.1 genera aplicaciones web completas con planificación arquitectónica, frontend, backend, base de datos, testing y despliegue. Ahora con 24B parámetros, 256K de contexto y auto-corrección integrada que detecta y repara errores antes de mostrar el resultado.',
+      'Nuestro modelo más potente. KODA 1.3 genera aplicaciones web completas con planificación arquitectónica, frontend, backend, base de datos, testing y despliegue. Ahora con 28B parámetros, 320K de contexto, 4 agentes especializados (ARQ, CODE, QA, UX), vista previa de código y sugerencias de mejora automáticas.',
     color: '#06d6a0',
     gradient: 'from-[#06d6a0] to-[#00ffc8]',
     icon: Cpu,
     features: [
+      '4 agentes especializados en tiempo real',
+      '28B parámetros — máximo rendimiento',
+      'Vista previa del código generado',
+      'Botón de publicar con deploy automático',
+      'Sugerencias de mejora automáticas',
       'Auto-corrección inteligente de errores',
-      '24B parámetros — máximo rendimiento',
-      'Código production-ready con Zod validation',
-      'Testing integrado (Vitest + Playwright)',
-      'API REST + GraphQL + WebSockets',
-      'Deploy config para Vercel, Docker, AWS',
     ],
     specs: {
-      params: '24B',
-      context: '256K tokens',
+      params: '28B',
+      context: '320K',
       speed: '72 tok/s',
     },
+    agents: ['ARQ', 'CODE', 'QA', 'UX'],
   },
   {
     name: 'NOVA',
-    version: '0.9',
-    fullName: 'NOVA 0.9',
-    tagline: 'Brillante, versátil y auto-mejorable',
+    version: '1.1',
+    fullName: 'NOVA 1.1',
+    tagline: 'Brillante, versátil y auto-mejorable con agentes',
     description:
-      'El modelo brillante de NexForge. NOVA 0.9 combina inteligencia contextual avanzada con velocidad de iteración y auto-mejora continua. Ahora con 14B parámetros y 128K de contexto, genera código limpio, bien documentado y listo para producir con explicaciones paso a paso y verificación automática.',
+      'El modelo brillante de NexForge. NOVA 1.1 combina inteligencia contextual avanzada con velocidad de iteración, auto-mejora continua y 4 agentes especializados. Con 16B parámetros y 160K de contexto, genera código limpio con sugerencias de mejora, vista previa y deploy automático.',
     color: '#00ffc8',
     gradient: 'from-[#00ffc8] to-[#06d6a0]',
     icon: Brain,
     features: [
       'Auto-mejora continua por prompt',
-      'Refactorización inteligente con patrones',
-      'Componentes reutilizables + Storybook',
+      '4 agentes: ARQ, CODE, QA, UX',
+      'Vista previa y deploy automático',
       'Documentación automática JSDoc/TSDoc',
-      'Verificación de código en tiempo real',
+      'Sugerencias de mejora inteligentes',
       'Design system generation',
     ],
     specs: {
-      params: '14B',
-      context: '128K tokens',
-      speed: '120 tok/s',
+      params: '16B',
+      context: '160K',
+      speed: '135 tok/s',
     },
+    agents: ['ARQ', 'CODE', 'QA', 'UX'],
   },
   {
     name: 'FLUX',
-    version: '0.7',
-    fullName: 'FLUX 0.7',
-    tagline: 'Velocidad extrema con self-check integrado',
+    version: '0.9',
+    fullName: 'FLUX 0.9',
+    tagline: 'Velocidad extrema con agentes y vista previa',
     description:
-      'Velocidad pura potenciada. FLUX 0.7 ahora con 7B parámetros y 220 tok/s genera MVPs completos y prototipos funcionales en segundos. Incluye self-check automático que verifica imports, tipos y lógica antes de entregar el código.',
+      'Velocidad pura potenciada. FLUX 0.9 con 9B parámetros y 245 tok/s genera MVPs completos y prototipos funcionales en segundos. Incluye 4 agentes especializados, vista previa del código, self-check automático y botón de publicar.',
     color: '#10b981',
     gradient: 'from-[#10b981] to-[#06d6a0]',
     icon: Rocket,
     features: [
-      'Self-check automático pre-entrega',
-      'Prototipado ultrarrápido — 220 tok/s',
-      'MVP completo en segundos',
-      'Live preview con hot-reload',
-      'Plantillas smart por industria',
+      '4 agentes trabajando en paralelo',
+      'Prototipado ultrarrápido — 245 tok/s',
+      'Vista previa en tiempo real',
+      'Botón publicar con deploy Vercel',
+      'Sugerencias de mejora rápidas',
       'Zero-config deployment',
     ],
     specs: {
-      params: '7B',
-      context: '80K tokens',
-      speed: '220 tok/s',
+      params: '9B',
+      context: '96K',
+      speed: '245 tok/s',
     },
+    agents: ['ARQ', 'CODE', 'QA', 'UX'],
   },
 ]
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.2 },
-  },
+  visible: { opacity: 1, transition: { staggerChildren: 0.2 } },
 }
 
 const cardVariants = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
 }
+
+const agentInfo = [
+  { name: 'ARQ', icon: Layers, color: '#8b5cf6', desc: 'Arquitecto' },
+  { name: 'CODE', icon: Code, color: '#06d6a0', desc: 'Programador' },
+  { name: 'QA', icon: TestTube2, color: '#f59e0b', desc: 'Calidad' },
+  { name: 'UX', icon: Paintbrush, color: '#ec4899', desc: 'Diseño' },
+]
 
 export function ModelsSection() {
   return (
@@ -107,17 +114,36 @@ export function ModelsSection() {
           className="text-center mb-16"
         >
           <Badge className="bg-[#06d6a0]/10 text-[#06d6a0] border-[#06d6a0]/20 mb-4">
-            <Layers className="w-3 h-3 mr-1" />
-            3 Modelos de IA con Auto-Corrección
+            <Users className="w-3 h-3 mr-1" />
+            3 Modelos + 4 Agentes Especializados
           </Badge>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
             Tres motores,{' '}
-            <span className="text-gradient">poder infinito</span>
+            <span className="text-gradient">4 agentes, poder infinito</span>
           </h2>
           <p className="text-lg text-[oklch(0.6_0.02_200)] max-w-2xl mx-auto">
-            Cada modelo está optimizado para un propósito y todos incluyen auto-corrección.
-            Elige el que mejor se adapte a tu proyecto o combínalos para resultados extraordinarios.
+            Cada modelo incluye 4 agentes especializados que trabajan en tiempo real.
+            ARQ diseña, CODE implementa, QA verifica y UX optimiza. La duración depende de tu prompt.
           </p>
+        </motion.div>
+
+        {/* Agent badges row */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center justify-center gap-4 mb-12"
+        >
+          {agentInfo.map((agent) => (
+            <div key={agent.name} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[oklch(0.2_0.03_260)] bg-[oklch(0.1_0.02_260)]">
+              <agent.icon className="w-5 h-5" style={{ color: agent.color }} />
+              <div>
+                <span className="text-sm font-bold" style={{ color: agent.color }}>{agent.name}</span>
+                <span className="text-xs text-[oklch(0.5_0.02_200)] ml-1">{agent.desc}</span>
+              </div>
+            </div>
+          ))}
         </motion.div>
 
         {/* Model cards */}
@@ -131,66 +157,49 @@ export function ModelsSection() {
           {models.map((model) => (
             <motion.div key={model.name} variants={cardVariants}>
               <Card className="relative bg-[oklch(0.12_0.02_260)]/80 backdrop-blur border-[oklch(0.25_0.04_260)] hover:border-[oklch(0.35_0.04_260)] transition-all duration-300 h-full group overflow-hidden">
-                {/* Glow effect on hover */}
                 <div
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{
-                    background: `radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), ${model.color}08, transparent 40%)`,
-                  }}
+                  style={{ background: `radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), ${model.color}08, transparent 40%)` }}
                 />
-
                 <CardHeader className="relative pb-4">
                   <div className="flex items-start justify-between mb-4">
                     <div
                       className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{
-                        background: `linear-gradient(135deg, ${model.color}20, ${model.color}10)`,
-                        border: `1px solid ${model.color}30`,
-                      }}
+                      style={{ background: `linear-gradient(135deg, ${model.color}20, ${model.color}10)`, border: `1px solid ${model.color}30` }}
                     >
                       <model.icon className="w-6 h-6" style={{ color: model.color }} />
                     </div>
-                    <Badge
-                      className="font-mono text-xs px-2 py-1"
-                      style={{
-                        background: `${model.color}15`,
-                        color: model.color,
-                        border: `1px solid ${model.color}30`,
-                      }}
-                    >
+                    <Badge className="font-mono text-xs px-2 py-1" style={{ background: `${model.color}15`, color: model.color, border: `1px solid ${model.color}30` }}>
                       v{model.version}
                     </Badge>
                   </div>
-
                   <h3 className="text-2xl font-bold tracking-tight">
                     <span style={{ color: model.color }}>{model.name}</span>{' '}
                     <span className="text-[oklch(0.5_0.02_200)]">{model.version}</span>
                   </h3>
-                  <p className="text-sm text-[oklch(0.5_0.02_200)] font-medium">
-                    {model.tagline}
-                  </p>
+                  <p className="text-sm text-[oklch(0.5_0.02_200)] font-medium">{model.tagline}</p>
                 </CardHeader>
-
                 <CardContent className="relative space-y-5">
-                  <p className="text-sm text-[oklch(0.6_0.02_200)] leading-relaxed">
-                    {model.description}
-                  </p>
-
-                  {/* Specs */}
+                  <p className="text-sm text-[oklch(0.6_0.02_200)] leading-relaxed">{model.description}</p>
                   <div className="grid grid-cols-3 gap-3">
                     {Object.entries(model.specs).map(([key, value]) => (
-                      <div
-                        key={key}
-                        className="text-center p-2 rounded-lg"
-                        style={{ background: `${model.color}08`, border: `1px solid ${model.color}15` }}
-                      >
+                      <div key={key} className="text-center p-2 rounded-lg" style={{ background: `${model.color}08`, border: `1px solid ${model.color}15` }}>
                         <div className="text-xs text-[oklch(0.5_0.02_200)] capitalize mb-1">{key}</div>
                         <div className="text-sm font-bold" style={{ color: model.color }}>{value}</div>
                       </div>
                     ))}
                   </div>
-
-                  {/* Features */}
+                  {/* Agent badges */}
+                  <div className="flex items-center gap-2">
+                    {model.agents.map((agent) => {
+                      const info = agentInfo.find(a => a.name === agent)
+                      return info ? (
+                        <span key={agent} className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono" style={{ color: info.color, background: `${info.color}15`, border: `1px solid ${info.color}20` }}>
+                          <info.icon className="w-3 h-3" />{info.name}
+                        </span>
+                      ) : null
+                    })}
+                  </div>
                   <div className="space-y-2">
                     {model.features.map((feature) => (
                       <div key={feature} className="flex items-center gap-2">

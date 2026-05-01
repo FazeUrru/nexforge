@@ -16,15 +16,11 @@ export function CTASection() {
           transition={{ duration: 0.6 }}
           className="relative rounded-2xl overflow-hidden"
         >
-          {/* Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#06d6a0]/10 via-[oklch(0.12_0.02_260)] to-[#00ffc8]/10" />
           <div className="absolute inset-0 bg-grid opacity-30" />
-
-          {/* Glow */}
           <div className="absolute -top-20 -left-20 w-60 h-60 bg-[#06d6a0]/10 rounded-full blur-3xl" />
           <div className="absolute -bottom-20 -right-20 w-60 h-60 bg-[#00ffc8]/10 rounded-full blur-3xl" />
 
-          {/* Content */}
           <div className="relative p-8 sm:p-12 md:p-16 text-center">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -34,7 +30,7 @@ export function CTASection() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#06d6a0]/10 border border-[#06d6a0]/20 mb-6"
             >
               <Sparkles className="w-4 h-4 text-[#06d6a0]" />
-              <span className="text-sm font-medium text-[#06d6a0]">Sin tarjeta de crédito. Sin límites. Auto-corrección incluida.</span>
+              <span className="text-sm font-medium text-[#06d6a0]">4 Agentes · Vista Previa · Publicar · 100% Gratis</span>
             </motion.div>
 
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
@@ -43,7 +39,7 @@ export function CTASection() {
             </h2>
             <p className="text-lg text-[oklch(0.6_0.02_200)] max-w-xl mx-auto mb-8 leading-relaxed">
               Únete a miles de desarrolladores que ya crean aplicaciones web completas
-              con IA. Gratis, ilimitado y OpenSource. Para siempre.
+              con 4 agentes IA especializados. Gratis, ilimitado y OpenSource. Para siempre.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

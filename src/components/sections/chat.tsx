@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -10,9 +10,15 @@ import {
   Zap, CheckCircle2, Circle, Loader2, Code2, LayoutList, Play,
   FileCode2, Database, Shield, Palette, Server, RocketIcon,
   Copy, Check, Volume2, VolumeX, Pencil, MessageSquare,
-  GitBranch, RefreshCw,
+  GitBranch, RefreshCw, Eye, Globe, Lightbulb, Users,
+  Architecture, Wrench, TestTube2, Paintbrush, ArrowRight,
+  ExternalLink, Clock, Layers, Activity,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+
+// ─── Types ───────────────────────────────────────────────────────
 
 interface Message {
   id: string
@@ -21,6 +27,30 @@ interface Message {
   model?: string
   isStreaming?: boolean
   selfCorrected?: boolean
+  suggestions?: Suggestion[]
+  codeBlocks?: CodeBlock[]
+  agentResults?: AgentResult[]
+}
+
+interface Suggestion {
+  id: string
+  title: string
+  description: string
+}
+
+interface CodeBlock {
+  id: string
+  language: string
+  code: string
+  filename?: string
+}
+
+interface AgentResult {
+  agentId: string
+  agentName: string
+  phase: string
+  result: string
+  status: 'pending' | 'active' | 'done'
 }
 
 interface PlanStep {
@@ -30,6 +60,9 @@ interface PlanStep {
   detail: string
   subSteps?: string[]
   status: 'pending' | 'active' | 'done'
+  agentId?: string
+  agentName?: string
+  duration?: number // in seconds
 }
 
 interface ModelOption {
@@ -44,150 +77,274 @@ interface ModelOption {
   context: string
 }
 
+interface AgentInfo {
+  id: string
+  name: string
+  icon: typeof Cpu
+  color: string
+  description: string
+}
+
+// ─── Constants ───────────────────────────────────────────────────
+
 const models: ModelOption[] = [
   {
-    key: 'koda-1.1',
+    key: 'koda-1.3',
     name: 'KODA',
-    version: '1.1',
+    version: '1.3',
     icon: Cpu,
     color: '#06d6a0',
-    description: 'Full-stack avanzado con auto-corrección',
+    description: 'Full-stack avanzado + 4 agentes especializados',
     speed: '72 tok/s',
-    params: '24B',
-    context: '256K',
+    params: '28B',
+    context: '320K',
   },
   {
-    key: 'nova-0.9',
+    key: 'nova-1.1',
     name: 'NOVA',
-    version: '0.9',
+    version: '1.1',
     icon: Brain,
     color: '#00ffc8',
     description: 'Equilibrado, brillante y auto-mejorable',
-    speed: '120 tok/s',
-    params: '14B',
-    context: '128K',
+    speed: '135 tok/s',
+    params: '16B',
+    context: '160K',
   },
   {
-    key: 'flux-0.7',
+    key: 'flux-0.9',
     name: 'FLUX',
-    version: '0.7',
+    version: '0.9',
     icon: Rocket,
     color: '#10b981',
     description: 'Velocidad extrema + self-check',
-    speed: '220 tok/s',
-    params: '7B',
-    context: '80K',
+    speed: '245 tok/s',
+    params: '9B',
+    context: '96K',
   },
+]
+
+const agents: AgentInfo[] = [
+  { id: 'arq', name: 'ARQ', icon: Layers, color: '#8b5cf6', description: 'Agente Arquitecto — Diseña la arquitectura del sistema' },
+  { id: 'code', name: 'CODE', icon: Code2, color: '#06d6a0', description: 'Agente Programador — Implementa el código completo' },
+  { id: 'qa', name: 'QA', icon: TestTube2, color: '#f59e0b', description: 'Agente Calidad — Verifica, testea y corrige errores' },
+  { id: 'ux', name: 'UX', icon: Paintbrush, color: '#ec4899', description: 'Agente Diseño — Optimiza UI/UX y accesibilidad' },
 ]
 
 const suggestedPrompts = [
-  { icon: '🛒', text: 'Crea una app de e-commerce con carrito y pagos' },
-  { icon: '📊', text: 'Genera un dashboard con gráficos en tiempo real' },
-  { icon: '📝', text: 'Haz un blog con CMS y sistema de comentarios' },
-  { icon: '✅', text: 'Crea una app de tareas con auth y base de datos' },
-  { icon: '🌐', text: 'Genera una API REST para reservas con Prisma' },
-  { icon: '🎨', text: 'Haz un portfolio con animaciones y dark mode' },
+  { icon: '🛒', text: 'Crea una app de e-commerce con carrito, pagos Stripe y panel admin' },
+  { icon: '📊', text: 'Genera un dashboard con gráficos en tiempo real y autenticación' },
+  { icon: '📝', text: 'Haz un blog con CMS, comentarios, markdown y SEO automático' },
+  { icon: '✅', text: 'Crea una app de gestión de proyectos tipo Trello con drag & drop' },
+  { icon: '🌐', text: 'Genera una red social con perfiles, posts, likes y mensajería' },
+  { icon: '🎨', text: 'Haz un portfolio con animaciones 3D, dark mode y blog integrado' },
+  { icon: '📱', text: 'Crea una app de chat en tiempo real con WebSockets y notificaciones' },
+  { icon: '💰', text: 'Genera una app de finanzas con presupuestos, gráficos y exportación' },
 ]
 
-// Extended planning steps for app creation — much more detailed
-const appPlanSteps: PlanStep[] = [
-  {
-    id: 1,
-    icon: LayoutList,
-    text: 'Analizando requisitos del proyecto',
-    detail: 'Detectando tipo de app, features principales, stack tecnológico...',
-    subSteps: ['Clasificando tipo de aplicación', 'Identificando features core', 'Seleccionando stack tecnológico', 'Definiendo alcance del proyecto'],
-    status: 'pending',
-  },
-  {
-    id: 2,
-    icon: Database,
-    text: 'Diseñando modelo de datos y esquema',
-    detail: 'Tablas, relaciones, índices, migraciones, seed data...',
-    subSteps: ['Definiendo entidades principales', 'Estableciendo relaciones entre tablas', 'Creando índices para rendimiento', 'Generando migraciones y seed data'],
-    status: 'pending',
-  },
-  {
-    id: 3,
-    icon: Shield,
-    text: 'Configurando autenticación y autorización',
-    detail: 'NextAuth, OAuth providers, sesiones, roles, middleware...',
-    subSteps: ['Configurando NextAuth.js', 'Añadiendo providers OAuth', 'Implementando roles y permisos', 'Creando middleware de protección'],
-    status: 'pending',
-  },
-  {
-    id: 4,
-    icon: Server,
-    text: 'Creando API routes y endpoints REST',
-    detail: 'Endpoints, validación Zod, middleware, error handling...',
-    subSteps: ['Diseñando estructura de endpoints', 'Implementando validación con Zod', 'Añadiendo error handling global', 'Configurando rate limiting'],
-    status: 'pending',
-  },
-  {
-    id: 5,
-    icon: Palette,
-    text: 'Construyendo componentes UI y layouts',
-    detail: 'Layouts, páginas, forms, modales, design system...',
-    subSteps: ['Creando layout principal y navegación', 'Implementando componentes reutilizables', 'Diseñando forms con validación', 'Añadiendo estados de carga y error'],
-    status: 'pending',
-  },
-  {
-    id: 6,
-    icon: FileCode2,
-    text: 'Implementando lógica de negocio y servicios',
-    detail: 'Servicios, utils, hooks, state management, integraciones...',
-    subSteps: ['Implementando servicios de negocio', 'Creando custom hooks', 'Configurando state management', 'Añadiendo integraciones externas'],
-    status: 'pending',
-  },
-  {
-    id: 7,
-    icon: GitBranch,
-    text: 'Ejecutando auto-corrección y self-review',
-    detail: 'Verificando imports, tipos, errores, edge cases...',
-    subSteps: ['Verificando imports completos', 'Comprobando tipos TypeScript', 'Revisando manejo de errores', 'Validando edge cases'],
-    status: 'pending',
-  },
-  {
-    id: 8,
-    icon: RocketIcon,
-    text: 'Finalizando, documentando y preparando deploy',
-    detail: 'Deploy config, README, variables de entorno, tests...',
-    subSteps: ['Generando configuración de deploy', 'Creando README completo', 'Configurando variables de entorno', 'Preparando tests básicos'],
-    status: 'pending',
-  },
-]
+const NEXFORGE_VERSION = '0.5.0'
 
-const simplePlanSteps: PlanStep[] = [
-  {
-    id: 1,
-    icon: LayoutList,
-    text: 'Procesando solicitud',
-    detail: 'Analizando el mensaje y preparando la respuesta...',
-    subSteps: ['Interpretando la consulta', 'Accediendo a la base de conocimientos'],
-    status: 'pending',
-  },
-  {
-    id: 2,
-    icon: RefreshCw,
-    text: 'Auto-corrección y verificación',
-    detail: 'Revisando la respuesta para asegurar calidad...',
-    subSteps: ['Verificando corrección del código', 'Comprobando coherencia'],
-    status: 'pending',
-  },
-  {
-    id: 3,
-    icon: FileCode2,
-    text: 'Generando respuesta optimizada',
-    detail: 'Construyendo la respuesta final...',
-    subSteps: ['Formateando la salida', 'Aplicando mejoras automáticas'],
-    status: 'pending',
-  },
-]
+// ─── Complexity Analyzer ─────────────────────────────────────────
 
-const NEXFORGE_VERSION = '0.4.0'
+type ComplexityLevel = 'simple' | 'medium' | 'complex' | 'enterprise'
+
+function analyzeComplexity(text: string): { level: ComplexityLevel; score: number; phaseDuration: number; totalPhases: number } {
+  const lower = text.toLowerCase()
+  let score = 0
+
+  // Keyword scoring
+  const complexKeywords = [
+    'e-commerce', 'ecommerce', 'tienda', 'store', 'shop', 'pagos', 'stripe', 'paypal',
+    'red social', 'social network', 'chat', 'mensajer', 'real-time', 'websocket',
+    'dashboard', 'analytics', 'crm', 'erp', 'saas', 'plataforma',
+    'multi-tenant', 'roles', 'permisos', 'admin', 'panel admin',
+    'notificaciones', 'push', 'email', 'integración',
+    'api rest', 'graphql', 'microservicio', 'auth', 'oauth',
+  ]
+  const mediumKeywords = [
+    'blog', 'cms', 'portfolio', 'landing', 'app', 'aplicaci',
+    'crud', 'base de datos', 'database', 'login', 'registro',
+    'tareas', 'todo', 'gestión', 'management', 'reserva',
+  ]
+  const simpleKeywords = [
+    'hola', 'hello', 'explica', 'explain', 'qué es', 'how to',
+    'ejemplo', 'example', 'componente', 'button', 'form',
+  ]
+
+  complexKeywords.forEach((kw) => { if (lower.includes(kw)) score += 3 })
+  mediumKeywords.forEach((kw) => { if (lower.includes(kw)) score += 2 })
+  simpleKeywords.forEach((kw) => { if (lower.includes(kw)) score += 1 })
+
+  // Length scoring
+  if (text.length > 200) score += 2
+  if (text.length > 500) score += 3
+  if (text.length > 1000) score += 2
+
+  // Multiple features
+  const featureCount = (text.match(/y|con|con |also|plus|,|;/g) || []).length
+  score += Math.min(featureCount, 5)
+
+  // Determine level
+  let level: ComplexityLevel
+  let phaseDuration: number // seconds per phase
+  let totalPhases: number
+
+  if (score >= 15) {
+    level = 'enterprise'
+    phaseDuration = 90 // ~1.5 min per phase
+    totalPhases = 12
+  } else if (score >= 10) {
+    level = 'complex'
+    phaseDuration = 60 // ~1 min per phase
+    totalPhases = 10
+  } else if (score >= 5) {
+    level = 'medium'
+    phaseDuration = 30 // ~30s per phase
+    totalPhases = 8
+  } else {
+    level = 'simple'
+    phaseDuration = 12 // ~12s per phase
+    totalPhases = 4
+  }
+
+  return { level, score, phaseDuration, totalPhases }
+}
+
+// ─── Dynamic Plan Generator ──────────────────────────────────────
+
+function generatePlan(complexity: ReturnType<typeof analyzeComplexity>, isApp: boolean): PlanStep[] {
+  const { level, phaseDuration, totalPhases } = complexity
+
+  if (!isApp || level === 'simple') {
+    return [
+      {
+        id: 1, icon: LayoutList, text: 'Procesando solicitud',
+        detail: 'Analizando el mensaje y preparando la respuesta...',
+        subSteps: ['Interpretando la consulta', 'Accediendo a la base de conocimientos'],
+        status: 'pending', duration: phaseDuration,
+      },
+      {
+        id: 2, icon: RefreshCw, text: 'Auto-corrección y verificación',
+        detail: 'Revisando la respuesta para asegurar calidad...',
+        subSteps: ['Verificando corrección del código', 'Comprobando coherencia'],
+        status: 'pending', duration: phaseDuration,
+      },
+      {
+        id: 3, icon: FileCode2, text: 'Generando respuesta optimizada',
+        detail: 'Construyendo la respuesta final con sugerencias...',
+        subSteps: ['Formateando la salida', 'Generando sugerencias de mejora'],
+        status: 'pending', duration: phaseDuration,
+      },
+    ]
+  }
+
+  const basePhases: PlanStep[] = [
+    {
+      id: 1, icon: LayoutList, text: 'Analizando requisitos del proyecto',
+      detail: `Complejidad: ${level.toUpperCase()} — Detectando features, stack, alcance...`,
+      subSteps: ['Clasificando tipo de aplicación', 'Identificando features core', 'Seleccionando stack tecnológico', 'Definiendo alcance del proyecto', 'Calculando tiempo estimado'],
+      status: 'pending', agentId: 'arq', agentName: 'ARQ', duration: phaseDuration,
+    },
+    {
+      id: 2, icon: Layers, text: 'ARQ: Diseñando arquitectura del sistema',
+      detail: 'Arquitectura, patrones, microservicios, escalabilidad...',
+      subSteps: ['Diseñando arquitectura del sistema', 'Definiendo patrones de diseño', 'Planificando escalabilidad', 'Documentando decisiones técnicas'],
+      status: 'pending', agentId: 'arq', agentName: 'ARQ', duration: phaseDuration * 1.5,
+    },
+    {
+      id: 3, icon: Database, text: 'ARQ: Diseñando modelo de datos y esquema',
+      detail: 'Tablas, relaciones, índices, migraciones, seed data...',
+      subSteps: ['Definiendo entidades principales', 'Estableciendo relaciones entre tablas', 'Creando índices para rendimiento', 'Generando migraciones y seed data'],
+      status: 'pending', agentId: 'arq', agentName: 'ARQ', duration: phaseDuration,
+    },
+    {
+      id: 4, icon: Code2, text: 'CODE: Implementando API routes y endpoints',
+      detail: 'Endpoints REST, validación Zod, middleware, error handling...',
+      subSteps: ['Diseñando estructura de endpoints', 'Implementando validación con Zod', 'Añadiendo error handling global', 'Configurando rate limiting'],
+      status: 'pending', agentId: 'code', agentName: 'CODE', duration: phaseDuration * 1.2,
+    },
+    {
+      id: 5, icon: Palette, text: 'CODE: Construyendo componentes UI y layouts',
+      detail: 'Layouts, páginas, forms, modales, design system...',
+      subSteps: ['Creando layout principal y navegación', 'Implementando componentes reutilizables', 'Diseñando forms con validación', 'Añadiendo estados de carga y error'],
+      status: 'pending', agentId: 'code', agentName: 'CODE', duration: phaseDuration,
+    },
+    {
+      id: 6, icon: FileCode2, text: 'CODE: Implementando lógica de negocio',
+      detail: 'Servicios, utils, hooks, state management, integraciones...',
+      subSteps: ['Implementando servicios de negocio', 'Creando custom hooks', 'Configurando state management', 'Añadiendo integraciones externas'],
+      status: 'pending', agentId: 'code', agentName: 'CODE', duration: phaseDuration,
+    },
+    {
+      id: 7, icon: Shield, text: 'QA: Ejecutando verificación de calidad',
+      detail: 'Verificando imports, tipos, errores, edge cases...',
+      subSteps: ['Verificando imports completos', 'Comprobando tipos TypeScript', 'Revisando manejo de errores', 'Validando edge cases', 'Ejecutando tests automáticos'],
+      status: 'pending', agentId: 'qa', agentName: 'QA', duration: phaseDuration,
+    },
+    {
+      id: 8, icon: TestTube2, text: 'QA: Auto-corrección y self-review',
+      detail: 'Corrigiendo errores detectados, optimizando código...',
+      subSteps: ['Corrigiendo errores encontrados', 'Optimizando rendimiento', 'Mejorando manejo de errores', 'Verificando cobertura de tests'],
+      status: 'pending', agentId: 'qa', agentName: 'QA', duration: phaseDuration * 0.8,
+    },
+    {
+      id: 9, icon: Paintbrush, text: 'UX: Optimizando interfaz y experiencia',
+      detail: 'Accesibilidad, responsive, animaciones, feedback...',
+      subSteps: ['Mejorando accesibilidad (ARIA)', 'Optimizando responsive design', 'Añadiendo micro-animaciones', 'Mejorando feedback visual'],
+      status: 'pending', agentId: 'ux', agentName: 'UX', duration: phaseDuration * 0.8,
+    },
+  ]
+
+  // Add extra phases for complex/enterprise
+  if (level === 'complex' || level === 'enterprise') {
+    basePhases.push({
+      id: 10, icon: Server, text: 'CODE: Configurando autenticación y seguridad',
+      detail: 'NextAuth, OAuth, sesiones, roles, middleware de protección...',
+      subSteps: ['Configurando NextAuth.js', 'Añadiendo providers OAuth', 'Implementando roles y permisos', 'Creando middleware de protección'],
+      status: 'pending', agentId: 'code', agentName: 'CODE', duration: phaseDuration,
+    })
+  }
+
+  if (level === 'enterprise') {
+    basePhases.push({
+      id: 11, icon: Globe, text: 'UX: Configurando internacionalización y temas',
+      detail: 'i18n, temas, dark/light mode, configuración regional...',
+      subSteps: ['Implementando i18n', 'Configurando temas personalizables', 'Añadiendo dark/light mode', 'Adaptando configuración regional'],
+      status: 'pending', agentId: 'ux', agentName: 'UX', duration: phaseDuration * 0.7,
+    })
+  }
+
+  // Final phase always present
+  basePhases.push({
+    id: basePhases.length + 1, icon: RocketIcon, text: 'Finalizando, generando sugerencias y preparando vista previa',
+    detail: 'Deploy config, sugerencias de mejora, código final, vista previa...',
+    subSteps: ['Generando configuración de deploy', 'Creando sugerencias de mejora', 'Preparando vista previa del código', 'Documentando el proyecto'],
+    status: 'pending', agentId: 'code', agentName: 'CODE', duration: phaseDuration * 0.6,
+  })
+
+  return basePhases
+}
+
+// ─── Code Block Extractor ────────────────────────────────────────
+
+function extractCodeBlocks(content: string): CodeBlock[] {
+  const blocks: CodeBlock[] = []
+  const regex = /```(\w+)?\s*(?:\/\/\s*(\S+\.\w+))?\n([\s\S]*?)```/g
+  let match
+  while ((match = regex.exec(content)) !== null) {
+    blocks.push({
+      id: crypto.randomUUID(),
+      language: match[1] || 'typescript',
+      code: match[3].trim(),
+      filename: match[2] || undefined,
+    })
+  }
+  return blocks
+}
+
+// ─── Main Component ──────────────────────────────────────────────
 
 export function ChatSection() {
-  const [selectedModel, setSelectedModel] = useState<string>('koda-1.1')
+  const [selectedModel, setSelectedModel] = useState<string>('koda-1.3')
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -201,21 +358,35 @@ export function ChatSection() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [speakingId, setSpeakingId] = useState<string | null>(null)
   const [currentSubStep, setCurrentSubStep] = useState(0)
+  const [showCodePreview, setShowCodePreview] = useState(false)
+  const [previewCodeBlocks, setPreviewCodeBlocks] = useState<CodeBlock[]>([])
+  const [activePreviewBlock, setActivePreviewBlock] = useState(0)
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [publishProgress, setPublishProgress] = useState(0)
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
+  const [showAgents, setShowAgents] = useState(false)
+  const [activeAgents, setActiveAgents] = useState<Record<string, AgentResult>>({})
+  const [complexityInfo, setComplexityInfo] = useState<ReturnType<typeof analyzeComplexity> | null>(null)
+  const [elapsedTime, setElapsedTime] = useState(0)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const editTextareaRef = useRef<HTMLTextAreaElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const planTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const subStepTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const elapsedTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const currentModel = models.find((m) => m.key === selectedModel)!
+
+  // ─── Effects ─────────────────────────────────────────────────
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages, planSteps, scrollToBottom])
+  useEffect(() => { scrollToBottom() }, [messages, planSteps, scrollToBottom])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -228,21 +399,20 @@ export function ChatSection() {
   }, [])
 
   useEffect(() => {
-    if (isFullscreen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    if (isFullscreen) { document.body.style.overflow = 'hidden' }
+    else { document.body.style.overflow = '' }
     return () => { document.body.style.overflow = '' }
   }, [isFullscreen])
 
   useEffect(() => {
     return () => {
       if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current)
+      if (planTimerRef.current) clearInterval(planTimerRef.current)
+      if (subStepTimerRef.current) clearInterval(subStepTimerRef.current)
+      if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current)
     }
   }, [])
 
-  // Cleanup speech on unmount
   useEffect(() => {
     return () => {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -251,10 +421,12 @@ export function ChatSection() {
     }
   }, [])
 
+  // ─── Streaming ──────────────────────────────────────────────
+
   const simulateStreaming = useCallback((fullText: string, messageId: string) => {
     const words = fullText.split(/(\s+)/)
     let current = 0
-    const speed = selectedModel === 'flux-0.7' ? 5 : selectedModel === 'nova-0.9' ? 8 : 12
+    const speed = selectedModel === 'flux-0.9' ? 4 : selectedModel === 'nova-1.1' ? 7 : 10
 
     const interval = setInterval(() => {
       current += 1
@@ -269,17 +441,76 @@ export function ChatSection() {
       if (current >= words.length) {
         clearInterval(interval)
         streamingIntervalRef.current = null
+        // Extract code blocks and suggestions
+        const codeBlocks = extractCodeBlocks(fullText)
         setMessages((prev) =>
-          prev.map((m) => m.id === messageId ? { ...m, isStreaming: false } : m)
+          prev.map((m) => m.id === messageId ? { ...m, isStreaming: false, codeBlocks } : m)
         )
         setPlanSteps((prev) => prev.map((s) => ({ ...s, status: 'done' as const })))
         setShowPlan(false)
+        setShowAgents(false)
+        // Auto-show code preview if code blocks found
+        if (codeBlocks.length > 0) {
+          setPreviewCodeBlocks(codeBlocks)
+          setActivePreviewBlock(0)
+        }
+        // Fetch suggestions
+        fetchSuggestions(messageId, fullText)
       }
     }, speed)
 
     streamingIntervalRef.current = interval
     return interval
   }, [selectedModel])
+
+  // ─── Suggestions Fetch ──────────────────────────────────────
+
+  const fetchSuggestions = useCallback(async (messageId: string, content: string) => {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: `Sugiere mejoras para esta app: ${content.substring(0, 500)}` }],
+          model: selectedModel,
+          agent: 'suggest',
+        }),
+      })
+      if (response.ok) {
+        const data = await response.json()
+        let suggestions: Suggestion[] = []
+        try {
+          // Try to parse JSON array from the response
+          const jsonMatch = data.message.match(/\[[\s\S]*\]/)
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0])
+            suggestions = parsed.map((s: { title: string; description: string }) => ({
+              id: crypto.randomUUID(),
+              title: s.title,
+              description: s.description,
+            }))
+          }
+        } catch {
+          // Fallback: create suggestions from the text
+          const lines = data.message.split('\n').filter((l: string) => l.trim())
+          suggestions = lines.slice(0, 5).map((line: string) => ({
+            id: crypto.randomUUID(),
+            title: line.replace(/^[\d\.\-\*]+\s*/, '').substring(0, 60),
+            description: line.replace(/^[\d\.\-\*]+\s*/, ''),
+          }))
+        }
+        if (suggestions.length > 0) {
+          setMessages((prev) =>
+            prev.map((m) => m.id === messageId ? { ...m, suggestions } : m)
+          )
+        }
+      }
+    } catch {
+      // Suggestions fetch is non-critical
+    }
+  }, [selectedModel])
+
+  // ─── Complexity Detection ───────────────────────────────────
 
   const isAppRequest = useCallback((text: string): boolean => {
     const lower = text.toLowerCase()
@@ -289,37 +520,45 @@ export function ChatSection() {
       'tienda', 'store', 'shop', 'red social', 'chat', 'foro', 'crm', 'erp',
       'landing', 'saas', 'clone', 'clon', 'plataforma', 'sistema', 'proyecto',
       'site', 'página', 'pagina', 'website', 'crud', 'login', 'auth',
+      'gestión', 'management', 'finanzas', 'finance', 'notificaciones',
     ]
     return appKeywords.some((kw) => lower.includes(kw))
   }, [])
+
+  // ─── Plan Animation ─────────────────────────────────────────
 
   const startPlanAnimation = useCallback((steps: PlanStep[]) => {
     setPlanSteps(steps.map((s) => ({ ...s, status: 'pending' as const })))
     setCurrentPlanStep(0)
     setCurrentSubStep(0)
     setShowPlan(true)
+    setElapsedTime(0)
 
-    // Mark first as active immediately
+    // Start elapsed timer
+    elapsedTimerRef.current = setInterval(() => {
+      setElapsedTime((prev) => prev + 1)
+    }, 1000)
+
+    // Mark first as active
     setPlanSteps((prev) => prev.map((s, i) => i === 0 ? { ...s, status: 'active' as const } : s))
     setCurrentPlanStep(1)
   }, [])
 
-  // Advance plan steps on a longer timer — each step takes ~8 seconds with sub-step animation
+  // Advance plan steps based on calculated duration per step
   useEffect(() => {
     if (!showPlan || !isLoading || planSteps.length === 0) return
 
-    // Sub-step rotation every 2 seconds within each main step
-    const subStepTimer = setInterval(() => {
+    // Sub-step rotation every 2 seconds
+    subStepTimerRef.current = setInterval(() => {
       setCurrentSubStep((prev) => prev + 1)
     }, 2000)
 
-    // Main step advance every 8 seconds
-    const mainStepTimer = setInterval(() => {
+    // Use the duration from each step
+    const advanceStep = () => {
       setCurrentPlanStep((prev) => {
         const next = prev + 1
         if (next > planSteps.length) {
-          clearInterval(mainStepTimer)
-          clearInterval(subStepTimer)
+          if (planTimerRef.current) clearInterval(planTimerRef.current)
           return prev
         }
         setCurrentSubStep(0)
@@ -329,15 +568,49 @@ export function ChatSection() {
             status: i < next - 1 ? 'done' as const : i === next - 1 ? 'active' as const : 'pending' as const,
           }))
         )
+        // Update active agents display
+        const currentStep = planSteps[next - 1]
+        if (currentStep?.agentId) {
+          setShowAgents(true)
+          setActiveAgents((prev) => ({
+            ...prev,
+            [currentStep.agentId!]: {
+              agentId: currentStep.agentId!,
+              agentName: currentStep.agentName!,
+              phase: currentStep.text,
+              result: '',
+              status: 'active' as const,
+            },
+          }))
+          // Mark previous agent as done
+          Object.keys(prev).forEach((key) => {
+            if (key !== currentStep.agentId) {
+              prev[key].status = 'done'
+            }
+          })
+        }
+        // Schedule next advance based on step duration
+        const nextStep = planSteps[next - 1]
+        if (nextStep?.duration && next < planSteps.length) {
+          if (planTimerRef.current) clearInterval(planTimerRef.current)
+          planTimerRef.current = setInterval(advanceStep, nextStep.duration * 1000)
+        }
         return next
       })
-    }, 8000) // Each main step takes 8 seconds
+    }
+
+    // Initial step duration
+    const firstStepDuration = planSteps[0]?.duration || 8
+    planTimerRef.current = setInterval(advanceStep, firstStepDuration * 1000)
 
     return () => {
-      clearInterval(mainStepTimer)
-      clearInterval(subStepTimer)
+      if (planTimerRef.current) clearInterval(planTimerRef.current)
+      if (subStepTimerRef.current) clearInterval(subStepTimerRef.current)
+      if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current)
     }
   }, [showPlan, isLoading, planSteps.length])
+
+  // ─── Send Message ───────────────────────────────────────────
 
   const handleSend = async (overrideMessages?: Message[]) => {
     const messagesToSend = overrideMessages || messages
@@ -351,21 +624,21 @@ export function ChatSection() {
     }
 
     const assistantId = crypto.randomUUID()
-    const newMessages = overrideMessages ? [...messagesToSend, userMessage] : [...messagesToSend, userMessage]
-    if (!overrideMessages) {
-      setMessages((prev) => [...prev, userMessage])
-      setInput('')
-    } else {
-      setMessages([...messagesToSend, userMessage])
-      setInput('')
-    }
+    const newMessages = [...messagesToSend, userMessage]
+    setMessages(newMessages)
+    setInput('')
     setIsLoading(true)
+    setPublishedUrl(null)
+    setShowCodePreview(false)
 
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
 
-    // Start planning
-    const isApp = isAppRequest(textToSend || (overrideMessages ? overrideMessages[overrideMessages.length - 1]?.content : ''))
-    const steps = isApp ? appPlanSteps : simplePlanSteps
+    // Analyze complexity
+    const promptText = textToSend || (overrideMessages ? overrideMessages[overrideMessages.length - 1]?.content : '')
+    const complexity = analyzeComplexity(promptText)
+    setComplexityInfo(complexity)
+    const isApp = isAppRequest(promptText)
+    const steps = generatePlan(complexity, isApp)
     startPlanAnimation(steps)
 
     // Add empty assistant message
@@ -381,7 +654,7 @@ export function ChatSection() {
       }))
 
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 120000)
+      const timeoutId = setTimeout(() => controller.abort(), 300000) // 5 min timeout
 
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -398,12 +671,7 @@ export function ChatSection() {
 
       if (!response.ok) {
         let errorMsg = 'Error del servidor'
-        try {
-          const errData = await response.json()
-          errorMsg = errData.error || errorMsg
-        } catch {
-          // JSON parse failed
-        }
+        try { const errData = await response.json(); errorMsg = errData.error || errorMsg } catch { /* */ }
         throw new Error(errorMsg)
       }
 
@@ -419,7 +687,6 @@ export function ChatSection() {
       // Start streaming simulation
       simulateStreaming(data.message, assistantId)
 
-      // If self-corrected, mark it
       if (data.selfCorrected) {
         setMessages((prev) =>
           prev.map((m) => m.id === assistantId ? { ...m, selfCorrected: true } : m)
@@ -430,6 +697,7 @@ export function ChatSection() {
       if (!isAbort) {
         setPlanSteps([])
         setShowPlan(false)
+        setShowAgents(false)
       }
 
       setMessages((prev) => {
@@ -446,8 +714,48 @@ export function ChatSection() {
       })
     } finally {
       setIsLoading(false)
+      if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current)
     }
   }
+
+  // ─── Handle Suggestion Click ────────────────────────────────
+
+  const handleSuggestionClick = (suggestion: Suggestion) => {
+    setInput(suggestion.description)
+    textareaRef.current?.focus()
+  }
+
+  // ─── Publish ────────────────────────────────────────────────
+
+  const handlePublish = () => {
+    setIsPublishing(true)
+    setPublishProgress(0)
+    setPublishedUrl(null)
+
+    const steps = [
+      { progress: 15, label: 'Preparando archivos...' },
+      { progress: 30, label: 'Optimizando build...' },
+      { progress: 50, label: 'Subiendo a Vercel...' },
+      { progress: 70, label: 'Configurando dominio...' },
+      { progress: 85, label: 'Verificando despliegue...' },
+      { progress: 100, label: 'Publicado con éxito!' },
+    ]
+
+    let i = 0
+    const timer = setInterval(() => {
+      if (i < steps.length) {
+        setPublishProgress(steps[i].progress)
+        i++
+      } else {
+        clearInterval(timer)
+        setIsPublishing(false)
+        const appName = messages[messages.length - 2]?.content?.substring(0, 20).toLowerCase().replace(/[^a-z0-9]/g, '-') || 'nexforge-app'
+        setPublishedUrl(`https://${appName}.vercel.app`)
+      }
+    }, 1200)
+  }
+
+  // ─── Other Handlers ─────────────────────────────────────────
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -474,11 +782,17 @@ export function ChatSection() {
     setPlanSteps([])
     setShowPlan(false)
     setCurrentPlanStep(0)
-    if (streamingIntervalRef.current) {
-      clearInterval(streamingIntervalRef.current)
-      streamingIntervalRef.current = null
-    }
-    // Stop speech
+    setShowCodePreview(false)
+    setPreviewCodeBlocks([])
+    setPublishedUrl(null)
+    setIsPublishing(false)
+    setComplexityInfo(null)
+    setActiveAgents({})
+    setShowAgents(false)
+    if (streamingIntervalRef.current) { clearInterval(streamingIntervalRef.current); streamingIntervalRef.current = null }
+    if (planTimerRef.current) { clearInterval(planTimerRef.current); planTimerRef.current = null }
+    if (subStepTimerRef.current) { clearInterval(subStepTimerRef.current); subStepTimerRef.current = null }
+    if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
       setSpeakingId(null)
@@ -486,10 +800,7 @@ export function ChatSection() {
   }
 
   const handleRetry = async () => {
-    if (streamingIntervalRef.current) {
-      clearInterval(streamingIntervalRef.current)
-      streamingIntervalRef.current = null
-    }
+    if (streamingIntervalRef.current) { clearInterval(streamingIntervalRef.current); streamingIntervalRef.current = null }
     const lastUserIdx = [...messages].reverse().findIndex((m) => m.role === 'user')
     if (lastUserIdx === -1) return
     const actualIdx = messages.length - 1 - lastUserIdx
@@ -510,7 +821,6 @@ export function ChatSection() {
     }
   }
 
-  // Edit message
   const handleEditMessage = (messageId: string, content: string) => {
     setEditingMessageId(messageId)
     setEditText(content)
@@ -523,35 +833,31 @@ export function ChatSection() {
   }
 
   const handleSaveEdit = (messageId: string) => {
-    // Find the message index and truncate everything after it
     const msgIndex = messages.findIndex((m) => m.id === messageId)
     if (msgIndex === -1) return
 
     const updatedMessages = messages.slice(0, msgIndex)
     const editedMessage: Message = { ...messages[msgIndex], content: editText }
-
     setMessages(updatedMessages)
     setEditingMessageId(null)
     setEditText('')
     setIsLoading(false)
 
-    // Stop any ongoing streaming
-    if (streamingIntervalRef.current) {
-      clearInterval(streamingIntervalRef.current)
-      streamingIntervalRef.current = null
-    }
+    if (streamingIntervalRef.current) { clearInterval(streamingIntervalRef.current); streamingIntervalRef.current = null }
+    if (planTimerRef.current) { clearInterval(planTimerRef.current); planTimerRef.current = null }
+    if (subStepTimerRef.current) { clearInterval(subStepTimerRef.current); subStepTimerRef.current = null }
 
-    // Re-send from edited message
     const newMessages = [...updatedMessages, editedMessage]
     setMessages(newMessages)
     setInput('')
 
-    // Auto-send the edited message
     const assistantId = crypto.randomUUID()
     setIsLoading(true)
 
+    const complexity = analyzeComplexity(editText)
+    setComplexityInfo(complexity)
     const isApp = isAppRequest(editText)
-    const steps = isApp ? appPlanSteps : simplePlanSteps
+    const steps = generatePlan(complexity, isApp)
     startPlanAnimation(steps)
 
     setMessages((prev) => [
@@ -559,41 +865,26 @@ export function ChatSection() {
       { id: assistantId, role: 'assistant', content: '', model: currentModel.name, isStreaming: true },
     ])
 
-    const chatMessages = newMessages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }))
+    const chatMessages = newMessages.map((m) => ({ role: m.role, content: m.content }))
 
     fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: chatMessages,
-        model: selectedModel,
-        enableSelfCorrection: true,
-      }),
+      body: JSON.stringify({ messages: chatMessages, model: selectedModel, enableSelfCorrection: true }),
     })
-      .then((response) => {
-        if (!response.ok) throw new Error('Error del servidor')
-        return response.json()
-      })
+      .then((response) => { if (!response.ok) throw new Error('Error del servidor'); return response.json() })
       .then((data) => {
         if (!data.message) throw new Error('Respuesta vacía')
         setPlanSteps((prev) => prev.map((s) => ({ ...s, status: 'done' as const })))
         simulateStreaming(data.message, assistantId)
         if (data.selfCorrected) {
-          setMessages((prev) =>
-            prev.map((m) => m.id === assistantId ? { ...m, selfCorrected: true } : m)
-          )
+          setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, selfCorrected: true } : m))
         }
       })
       .catch(() => {
         setMessages((prev) => {
           const filtered = prev.filter((m) => m.id !== assistantId)
-          return [
-            ...filtered,
-            { id: assistantId, role: 'assistant', content: 'Error de conexión. Intenta de nuevo.', model: currentModel.name, isStreaming: false },
-          ]
+          return [...filtered, { id: assistantId, role: 'assistant', content: 'Error de conexión. Intenta de nuevo.', model: currentModel.name, isStreaming: false }]
         })
         setPlanSteps([])
         setShowPlan(false)
@@ -601,45 +892,27 @@ export function ChatSection() {
       .finally(() => setIsLoading(false))
   }
 
-  const handleCancelEdit = () => {
-    setEditingMessageId(null)
-    setEditText('')
-  }
+  const handleCancelEdit = () => { setEditingMessageId(null); setEditText('') }
 
-  // Copy message
   const handleCopyMessage = async (messageId: string, content: string) => {
     try {
       await navigator.clipboard.writeText(content)
-      setCopiedId(messageId)
-      setTimeout(() => setCopiedId(null), 2000)
     } catch {
-      // Fallback
       const textArea = document.createElement('textarea')
       textArea.value = content
       document.body.appendChild(textArea)
       textArea.select()
       document.execCommand('copy')
       document.body.removeChild(textArea)
-      setCopiedId(messageId)
-      setTimeout(() => setCopiedId(null), 2000)
     }
+    setCopiedId(messageId)
+    setTimeout(() => setCopiedId(null), 2000)
   }
 
-  // Listen message (TTS)
   const handleListenMessage = (messageId: string, content: string) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return
-
-    // If already speaking this message, stop
-    if (speakingId === messageId) {
-      window.speechSynthesis.cancel()
-      setSpeakingId(null)
-      return
-    }
-
-    // Stop any current speech
+    if (speakingId === messageId) { window.speechSynthesis.cancel(); setSpeakingId(null); return }
     window.speechSynthesis.cancel()
-
-    // Strip markdown for cleaner speech
     const plainText = content
       .replace(/```[\s\S]*?```/g, ' bloque de código ')
       .replace(/`([^`]+)`/g, '$1')
@@ -647,32 +920,39 @@ export function ChatSection() {
       .replace(/\*([^*]+)\*/g, '$1')
       .replace(/#{1,6}\s/g, '')
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      .replace(/[-*+]\s/g, '')
-      .replace(/\d+\.\s/g, '')
-
     const utterance = new SpeechSynthesisUtterance(plainText)
-    utterance.rate = 1.0
-    utterance.pitch = 1.0
-    utterance.volume = 1.0
-
-    // Try to find a Spanish voice
+    utterance.rate = 1.0; utterance.pitch = 1.0; utterance.volume = 1.0
     const voices = window.speechSynthesis.getVoices()
     const spanishVoice = voices.find((v) => v.lang.startsWith('es'))
     if (spanishVoice) utterance.voice = spanishVoice
-
     utterance.onend = () => setSpeakingId(null)
     utterance.onerror = () => setSpeakingId(null)
-
     setSpeakingId(messageId)
     window.speechSynthesis.speak(utterance)
   }
 
-  // Get current sub-step text for active plan step
   const getActiveSubStep = (step: PlanStep): string | null => {
     if (step.status !== 'active' || !step.subSteps || step.subSteps.length === 0) return null
-    const idx = currentSubStep % step.subSteps.length
-    return step.subSteps[idx]
+    return step.subSteps[currentSubStep % step.subSteps.length]
   }
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${m}:${s.toString().padStart(2, '0')}`
+  }
+
+  // ─── Get latest code blocks for preview ─────────────────────
+
+  const latestCodeBlocks = useMemo(() => {
+    const assistantMessages = messages.filter((m) => m.role === 'assistant' && m.codeBlocks && m.codeBlocks.length > 0)
+    if (assistantMessages.length === 0) return []
+    return assistantMessages[assistantMessages.length - 1].codeBlocks || []
+  }, [messages])
+
+  const hasCode = latestCodeBlocks.length > 0
+
+  // ─── Render ─────────────────────────────────────────────────
 
   const chatContent = (
     <>
@@ -712,11 +992,10 @@ export function ChatSection() {
                         </div>
                         <div className="flex items-center gap-3 mt-0.5">
                           <span className="text-xs text-[oklch(0.5_0.02_200)]">{model.description}</span>
-                          <span className="text-[10px] font-mono" style={{ color: model.color }}>{model.params} · {model.context}</span>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[10px] font-mono" style={{ color: model.color }}>{model.speed}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-mono" style={{ color: model.color }}>{model.params} · {model.context} · {model.speed}</span>
+                        </div>
                       </div>
                       {selectedModel === model.key && <div className="ml-1 w-2 h-2 rounded-full" style={{ backgroundColor: model.color }} />}
                     </button>
@@ -727,10 +1006,25 @@ export function ChatSection() {
           </div>
           <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#06d6a0]/5 border border-[#06d6a0]/10">
             <div className="w-1.5 h-1.5 rounded-full bg-[#06d6a0] animate-pulse" />
-            <span className="text-[10px] text-[#06d6a0] font-medium">Online · Auto-Corrección</span>
+            <span className="text-[10px] text-[#06d6a0] font-medium">4 Agentes · Auto-Corrección</span>
           </div>
+          {complexityInfo && isLoading && (
+            <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#8b5cf6]/10 border border-[#8b5cf6]/20">
+              <Activity className="w-3 h-3 text-[#8b5cf6]" />
+              <span className="text-[10px] text-[#8b5cf6] font-medium">{complexityInfo.level.toUpperCase()} · {formatTime(elapsedTime)}</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1">
+          {hasCode && !isLoading && (
+            <button
+              onClick={() => setShowCodePreview(!showCodePreview)}
+              className={`p-2 rounded-lg transition-all ${showCodePreview ? 'text-[#06d6a0] bg-[#06d6a0]/10' : 'text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5'}`}
+              title="Vista previa del código"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+          )}
           {messages.length > 0 && !isLoading && (
             <button onClick={handleRetry} className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title="Reintentar">
               <RotateCcw className="w-4 h-4" />
@@ -751,225 +1045,368 @@ export function ChatSection() {
         </div>
       </div>
 
-      {/* Messages */}
-      <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 scroll-smooth ${isFullscreen ? '' : 'h-[480px] sm:h-[540px]'}`}>
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center px-4">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#06d6a0]/20 to-[#00ffc8]/10 border border-[#06d6a0]/20 flex items-center justify-center mb-6 animate-pulse-glow">
-              <Sparkles className="w-10 h-10 text-[#06d6a0]" />
-            </div>
-            <h3 className="text-2xl font-bold mb-2">
-              Hola, soy <span style={{ color: currentModel.color }}>{currentModel.name} v{currentModel.version}</span>
-            </h3>
-            <p className="text-[oklch(0.5_0.02_200)] mb-8 max-w-md text-sm">
-              Describe la app que quieres crear. Planificaré cada paso, diseñaré la arquitectura, generaré el código completo y me auto-corregiré en tiempo real.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl">
-              {suggestedPrompts.map((prompt) => (
-                <button
-                  key={prompt.text}
-                  onClick={() => handleSuggestedPrompt(prompt.text)}
-                  className="flex items-start gap-2 text-left text-xs px-4 py-3 rounded-xl bg-[oklch(0.12_0.02_260)] border border-[oklch(0.2_0.03_260)] hover:border-[#06d6a0]/20 hover:bg-[oklch(0.14_0.02_260)] text-[oklch(0.6_0.02_200)] transition-all group"
-                >
-                  <span className="text-base shrink-0">{prompt.icon}</span>
-                  <span className="group-hover:text-[oklch(0.8_0.02_200)] transition-colors">{prompt.text}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4 max-w-4xl mx-auto">
-            {messages.map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-                className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {message.role === 'assistant' && (
-                  <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                    style={{ background: `linear-gradient(135deg, ${currentModel.color}20, ${currentModel.color}10)`, border: `1px solid ${currentModel.color}30` }}
+      {/* Main content area with code preview sidebar */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Messages */}
+        <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 scroll-smooth ${isFullscreen ? '' : 'h-[480px] sm:h-[540px]'}`}>
+          {messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center px-4">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#06d6a0]/20 to-[#00ffc8]/10 border border-[#06d6a0]/20 flex items-center justify-center mb-6 animate-pulse-glow">
+                <Sparkles className="w-10 h-10 text-[#06d6a0]" />
+              </div>
+              <h3 className="text-2xl font-bold mb-2">
+                Hola, soy <span style={{ color: currentModel.color }}>{currentModel.name} v{currentModel.version}</span>
+              </h3>
+              <p className="text-[oklch(0.5_0.02_200)] mb-3 max-w-md text-sm">
+                Describe la app que quieres crear. 4 agentes especializados trabajarán en tiempo real según la complejidad de tu proyecto.
+              </p>
+              <div className="flex items-center gap-3 mb-6">
+                {agents.map((agent) => (
+                  <div key={agent.id} className="flex items-center gap-1 px-2 py-1 rounded-md border border-[oklch(0.2_0.03_260)] bg-[oklch(0.1_0.02_260)]">
+                    <agent.icon className="w-3 h-3" style={{ color: agent.color }} />
+                    <span className="text-[10px] font-mono" style={{ color: agent.color }}>{agent.name}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl">
+                {suggestedPrompts.map((prompt) => (
+                  <button
+                    key={prompt.text}
+                    onClick={() => handleSuggestedPrompt(prompt.text)}
+                    className="flex items-start gap-2 text-left text-xs px-4 py-3 rounded-xl bg-[oklch(0.12_0.02_260)] border border-[oklch(0.2_0.03_260)] hover:border-[#06d6a0]/20 hover:bg-[oklch(0.14_0.02_260)] text-[oklch(0.6_0.02_200)] transition-all group"
                   >
-                    <Bot className="w-4 h-4" style={{ color: currentModel.color }} />
-                  </div>
-                )}
-                <div
-                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
-                    message.role === 'user'
-                      ? 'bg-gradient-to-r from-[#06d6a0]/20 to-[#00ffc8]/10 border border-[#06d6a0]/15'
-                      : 'bg-[oklch(0.12_0.02_260)] border border-[oklch(0.2_0.03_260)]'
-                  }`}
+                    <span className="text-base shrink-0">{prompt.icon}</span>
+                    <span className="group-hover:text-[oklch(0.8_0.02_200)] transition-colors">{prompt.text}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 max-w-4xl mx-auto">
+              {messages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  {editingMessageId === message.id ? (
-                    <div className="space-y-2">
-                      <textarea
-                        ref={editTextareaRef}
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                        className="w-full min-h-[60px] max-h-[200px] resize-none bg-[oklch(0.08_0.02_260)] border border-[#06d6a0]/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#06d6a0]/50"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleSaveEdit(message.id)}
-                          className="px-3 py-1.5 rounded-lg bg-[#06d6a0] text-[#0a0f1c] text-xs font-semibold hover:bg-[#06d6a0]/80 transition-colors"
-                        >
-                          Enviar editado
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="px-3 py-1.5 rounded-lg bg-[oklch(0.2_0.03_260)] text-[oklch(0.6_0.02_200)] text-xs font-medium hover:bg-[oklch(0.25_0.04_260)] transition-colors"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
+                  {message.role === 'assistant' && (
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                      style={{ background: `linear-gradient(135deg, ${currentModel.color}20, ${currentModel.color}10)`, border: `1px solid ${currentModel.color}30` }}
+                    >
+                      <Bot className="w-4 h-4" style={{ color: currentModel.color }} />
                     </div>
-                  ) : (
-                    <>
-                      {message.role === 'assistant' ? (
-                        <div className="text-sm leading-relaxed prose prose-invert prose-sm max-w-none
-                          [&_pre]:bg-[oklch(0.06_0.02_260)] [&_pre]:border [&_pre]:border-[oklch(0.2_0.03_260)] [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto [&_pre]:my-2
-                          [&_code]:text-[#06d6a0] [&_code]:font-mono [&_code]:text-xs [&_code]:bg-[oklch(0.08_0.02_260)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded
-                          [&_pre_code]:bg-transparent [&_pre_code]:px-0 [&_pre_code]:py-0 [&_pre_code]:text-[oklch(0.85_0.02_200)]
-                          [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-[#06d6a0]
-                          [&_h2]:text-base [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-2 [&_h2]:text-[#06d6a0]
-                          [&_h3]:text-sm [&_h3]:font-bold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:text-[#00ffc8]
-                          [&_p]:mb-2 [&_p]:last:mb-0
-                          [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2
-                          [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:mb-2
-                          [&_li]:mb-1
-                          [&_strong]:text-[oklch(0.9_0.02_200)] [&_strong]:font-semibold
-                          [&_a]:text-[#06d6a0] [&_a]:underline
-                          [&_blockquote]:border-l-2 [&_blockquote]:border-[#06d6a0]/30 [&_blockquote]:pl-3 [&_blockquote]:italic
-                        ">
-                          <ReactMarkdown>{message.content || ''}</ReactMarkdown>
-                          {message.isStreaming && (
-                            <span className="inline-block w-2 h-4 bg-[#06d6a0] animate-pulse ml-0.5 align-middle" />
-                          )}
+                  )}
+                  <div
+                    className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
+                      message.role === 'user'
+                        ? 'bg-gradient-to-r from-[#06d6a0]/20 to-[#00ffc8]/10 border border-[#06d6a0]/15'
+                        : 'bg-[oklch(0.12_0.02_260)] border border-[oklch(0.2_0.03_260)]'
+                    }`}
+                  >
+                    {editingMessageId === message.id ? (
+                      <div className="space-y-2">
+                        <textarea
+                          ref={editTextareaRef}
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          className="w-full min-h-[60px] max-h-[200px] resize-none bg-[oklch(0.08_0.02_260)] border border-[#06d6a0]/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#06d6a0]/50"
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={() => handleSaveEdit(message.id)} className="px-3 py-1.5 rounded-lg bg-[#06d6a0] text-[#0a0f1c] text-xs font-semibold hover:bg-[#06d6a0]/80 transition-colors">
+                            Enviar editado
+                          </button>
+                          <button onClick={handleCancelEdit} className="px-3 py-1.5 rounded-lg bg-[oklch(0.2_0.03_260)] text-[oklch(0.6_0.02_200)] text-xs font-medium hover:bg-[oklch(0.25_0.04_260)] transition-colors">
+                            Cancelar
+                          </button>
                         </div>
-                      ) : (
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
-                      )}
-                    </>
-                  )}
+                      </div>
+                    ) : (
+                      <>
+                        {message.role === 'assistant' ? (
+                          <div className="text-sm leading-relaxed prose prose-invert prose-sm max-w-none
+                            [&_pre]:bg-[oklch(0.06_0.02_260)] [&_pre]:border [&_pre]:border-[oklch(0.2_0.03_260)] [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto [&_pre]:my-2
+                            [&_code]:text-[#06d6a0] [&_code]:font-mono [&_code]:text-xs [&_code]:bg-[oklch(0.08_0.02_260)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded
+                            [&_pre_code]:bg-transparent [&_pre_code]:px-0 [&_pre_code]:py-0 [&_pre_code]:text-[oklch(0.85_0.02_200)]
+                            [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-[#06d6a0]
+                            [&_h2]:text-base [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-2 [&_h2]:text-[#06d6a0]
+                            [&_h3]:text-sm [&_h3]:font-bold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:text-[#00ffc8]
+                            [&_p]:mb-2 [&_p]:last:mb-0
+                            [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2
+                            [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:mb-2
+                            [&_li]:mb-1
+                            [&_strong]:text-[oklch(0.9_0.02_200)] [&_strong]:font-semibold
+                            [&_a]:text-[#06d6a0] [&_a]:underline
+                            [&_blockquote]:border-l-2 [&_blockquote]:border-[#06d6a0]/30 [&_blockquote]:pl-3 [&_blockquote]:italic
+                          ">
+                            <ReactMarkdown>{message.content || ''}</ReactMarkdown>
+                            {message.isStreaming && (
+                              <span className="inline-block w-2 h-4 bg-[#06d6a0] animate-pulse ml-0.5 align-middle" />
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+                        )}
+                      </>
+                    )}
 
-                  {/* Message action buttons - shown for non-streaming, non-editing messages */}
-                  {!message.isStreaming && !editingMessageId && message.content && (
-                    <div className="mt-2 flex items-center gap-1">
-                      {/* Edit button */}
-                      <button
-                        onClick={() => handleEditMessage(message.id, message.content)}
-                        className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all"
-                        title="Editar mensaje"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      {/* Copy button */}
-                      <button
-                        onClick={() => handleCopyMessage(message.id, message.content)}
-                        className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all"
-                        title="Copiar mensaje"
-                      >
-                        {copiedId === message.id ? (
-                          <Check className="w-3.5 h-3.5 text-[#06d6a0]" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
+                    {/* Message action buttons */}
+                    {!message.isStreaming && !editingMessageId && message.content && (
+                      <div className="mt-2 flex items-center gap-1">
+                        <button onClick={() => handleEditMessage(message.id, message.content)} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title="Editar mensaje">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => handleCopyMessage(message.id, message.content)} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title="Copiar mensaje">
+                          {copiedId === message.id ? <Check className="w-3.5 h-3.5 text-[#06d6a0]" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                        <button onClick={() => handleListenMessage(message.id, message.content)} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title={speakingId === message.id ? 'Detener lectura' : 'Escuchar mensaje'}>
+                          {speakingId === message.id ? <VolumeX className="w-3.5 h-3.5 text-[#06d6a0]" /> : <Volume2 className="w-3.5 h-3.5" />}
+                        </button>
+                        {message.codeBlocks && message.codeBlocks.length > 0 && (
+                          <button onClick={() => { setPreviewCodeBlocks(message.codeBlocks || []); setActivePreviewBlock(0); setShowCodePreview(true) }} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#8b5cf6] hover:bg-[#8b5cf6]/5 transition-all" title="Ver código">
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
                         )}
-                      </button>
-                      {/* Listen button */}
-                      <button
-                        onClick={() => handleListenMessage(message.id, message.content)}
-                        className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all"
-                        title={speakingId === message.id ? 'Detener lectura' : 'Escuchar mensaje'}
-                      >
-                        {speakingId === message.id ? (
-                          <VolumeX className="w-3.5 h-3.5 text-[#06d6a0]" />
-                        ) : (
-                          <Volume2 className="w-3.5 h-3.5" />
-                        )}
-                      </button>
+                      </div>
+                    )}
+
+                    {/* Suggestions */}
+                    {message.suggestions && message.suggestions.length > 0 && !message.isStreaming && (
+                      <div className="mt-3 pt-3 border-t border-[oklch(0.2_0.03_260)]">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Lightbulb className="w-3.5 h-3.5 text-[#f59e0b]" />
+                          <span className="text-[10px] font-bold text-[#f59e0b] uppercase tracking-wider">Sugerencias de mejora</span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {message.suggestions.map((suggestion) => (
+                            <button
+                              key={suggestion.id}
+                              onClick={() => handleSuggestionClick(suggestion)}
+                              className="w-full text-left flex items-start gap-2 px-3 py-2 rounded-lg bg-[#f59e0b]/5 border border-[#f59e0b]/10 hover:border-[#f59e0b]/25 hover:bg-[#f59e0b]/10 transition-all group"
+                            >
+                              <ArrowRight className="w-3 h-3 text-[#f59e0b] shrink-0 mt-0.5 group-hover:translate-x-0.5 transition-transform" />
+                              <div>
+                                <span className="text-xs font-medium text-[oklch(0.8_0.02_200)]">{suggestion.title}</span>
+                                <p className="text-[10px] text-[oklch(0.5_0.02_200)] mt-0.5 line-clamp-2">{suggestion.description}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {message.role === 'assistant' && message.model && !message.isStreaming && message.content && (
+                      <p className="text-[10px] text-[oklch(0.35_0.02_200)] mt-1 font-mono flex items-center gap-1">
+                        <Zap className="w-2.5 h-2.5" />
+                        {message.model} · NexForge v{NEXFORGE_VERSION}
+                        {message.selfCorrected && <span className="text-[#06d6a0] ml-1">· Auto-corregido ✓</span>}
+                        {message.codeBlocks && message.codeBlocks.length > 0 && <span className="text-[#8b5cf6] ml-1">· {message.codeBlocks.length} archivos</span>}
+                      </p>
+                    )}
+                  </div>
+                  {message.role === 'user' && (
+                    <div className="w-8 h-8 rounded-xl bg-[oklch(0.2_0.03_260)] border border-[oklch(0.25_0.04_260)] flex items-center justify-center shrink-0 mt-0.5">
+                      <User className="w-4 h-4 text-[oklch(0.6_0.02_200)]" />
                     </div>
                   )}
+                </motion.div>
+              ))}
 
-                  {message.role === 'assistant' && message.model && !message.isStreaming && message.content && (
-                    <p className="text-[10px] text-[oklch(0.35_0.02_200)] mt-1 font-mono flex items-center gap-1">
-                      <Zap className="w-2.5 h-2.5" />
-                      {message.model} · NexForge v{NEXFORGE_VERSION}
-                      {message.selfCorrected && (
-                        <span className="text-[#06d6a0] ml-1">· Auto-corregido ✓</span>
+              {/* Plan progress */}
+              {showPlan && planSteps.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="max-w-lg mx-auto"
+                >
+                  <div className="rounded-xl bg-[oklch(0.1_0.02_260)] border border-[#06d6a0]/15 p-4 space-y-2">
+                    <div className="flex items-center gap-2 mb-3">
+                      <LayoutList className="w-4 h-4 text-[#06d6a0]" />
+                      <span className="text-xs font-bold text-[#06d6a0] uppercase tracking-wider">
+                        {isLoading ? `${complexityInfo?.level.toUpperCase() || 'Procesando'} · 4 Agentes activos` : 'Completado'}
+                      </span>
+                      {isLoading && (
+                        <span className="text-[10px] font-mono text-[oklch(0.4_0.02_200)] ml-auto flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {formatTime(elapsedTime)}
+                        </span>
                       )}
-                    </p>
-                  )}
-                </div>
-                {message.role === 'user' && (
-                  <div className="w-8 h-8 rounded-xl bg-[oklch(0.2_0.03_260)] border border-[oklch(0.25_0.04_260)] flex items-center justify-center shrink-0 mt-0.5">
-                    <User className="w-4 h-4 text-[oklch(0.6_0.02_200)]" />
-                  </div>
-                )}
-              </motion.div>
-            ))}
-
-            {/* Plan progress */}
-            {showPlan && planSteps.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="max-w-lg mx-auto"
-              >
-                <div className="rounded-xl bg-[oklch(0.1_0.02_260)] border border-[#06d6a0]/15 p-4 space-y-2.5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <LayoutList className="w-4 h-4 text-[#06d6a0]" />
-                    <span className="text-xs font-bold text-[#06d6a0] uppercase tracking-wider">
-                      {isLoading ? 'Planificando con auto-corrección' : 'Completado'}
-                    </span>
-                    <div className="flex-1 h-1.5 bg-[oklch(0.15_0.03_260)] rounded-full overflow-hidden ml-2">
+                    </div>
+                    {/* Progress bar */}
+                    <div className="flex-1 h-1.5 bg-[oklch(0.15_0.03_260)] rounded-full overflow-hidden mb-3">
                       <motion.div
                         className="h-full bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] rounded-full"
                         animate={{ width: `${(planSteps.filter(s => s.status === 'done').length / planSteps.length) * 100}%` }}
                         transition={{ duration: 0.5 }}
                       />
                     </div>
-                    <span className="text-[10px] font-mono text-[#06d6a0]">
-                      {planSteps.filter(s => s.status === 'done').length}/{planSteps.length}
-                    </span>
-                  </div>
-                  {planSteps.map((step) => {
-                    const activeSubStep = getActiveSubStep(step)
-                    return (
-                      <div key={step.id} className="flex items-start gap-2.5">
-                        {step.status === 'done' ? (
-                          <CheckCircle2 className="w-4 h-4 text-[#06d6a0] shrink-0 mt-0.5" />
-                        ) : step.status === 'active' ? (
-                          <Loader2 className="w-4 h-4 text-[#06d6a0] animate-spin shrink-0 mt-0.5" />
-                        ) : (
-                          <Circle className="w-4 h-4 text-[oklch(0.25_0.02_260)] shrink-0 mt-0.5" />
-                        )}
-                        <div className="flex-1">
-                          <span className={`text-xs font-medium ${step.status === 'done' ? 'text-[oklch(0.6_0.02_200)]' : step.status === 'active' ? 'text-[#06d6a0]' : 'text-[oklch(0.35_0.02_200)]'}`}>
-                            {step.text}
-                          </span>
-                          {step.status === 'active' && (
-                            <p className="text-[10px] text-[oklch(0.4_0.02_200)] mt-0.5">
-                              {activeSubStep || step.detail}
-                            </p>
-                          )}
-                          {step.status === 'done' && step.subSteps && (
-                            <p className="text-[10px] text-[oklch(0.3_0.02_200)] mt-0.5">
-                              Completado: {step.subSteps.join(' · ')}
-                            </p>
-                          )}
-                        </div>
+                    {/* Agent badges */}
+                    {showAgents && (
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        {agents.map((agent) => {
+                          const isActive = planSteps.some(s => s.agentId === agent.id && s.status === 'active')
+                          const isDone = planSteps.some(s => s.agentId === agent.id && s.status === 'done')
+                          return (
+                            <div key={agent.id} className={`flex items-center gap-1 px-2 py-1 rounded-md border transition-all ${isActive ? `border-[${agent.color}]/30 bg-[${agent.color}]/10` : isDone ? 'border-[oklch(0.2_0.03_260)] bg-[oklch(0.12_0.02_260)]' : 'border-[oklch(0.15_0.02_260)] bg-[oklch(0.08_0.02_260)] opacity-50'}`}>
+                              {isActive ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: agent.color }} /> : isDone ? <CheckCircle2 className="w-3 h-3" style={{ color: agent.color }} /> : <agent.icon className="w-3 h-3" style={{ color: agent.color }} />}
+                              <span className={`text-[10px] font-mono ${isActive ? 'font-bold' : ''}`} style={{ color: agent.color }}>{agent.name}</span>
+                            </div>
+                          )
+                        })}
                       </div>
-                    )
-                  })}
-                </div>
-              </motion.div>
-            )}
+                    )}
+                    {/* Steps */}
+                    <div className="space-y-1.5 max-h-[300px] overflow-y-auto">
+                      {planSteps.map((step) => {
+                        const activeSubStep = getActiveSubStep(step)
+                        return (
+                          <div key={step.id} className="flex items-start gap-2">
+                            {step.status === 'done' ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#06d6a0] shrink-0 mt-0.5" />
+                            ) : step.status === 'active' ? (
+                              <Loader2 className="w-3.5 h-3.5 text-[#06d6a0] animate-spin shrink-0 mt-0.5" />
+                            ) : (
+                              <Circle className="w-3.5 h-3.5 text-[oklch(0.25_0.02_260)] shrink-0 mt-0.5" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`text-[11px] font-medium ${step.status === 'done' ? 'text-[oklch(0.6_0.02_200)]' : step.status === 'active' ? 'text-[#06d6a0]' : 'text-[oklch(0.35_0.02_200)]'}`}>
+                                  {step.text}
+                                </span>
+                                {step.agentName && step.status !== 'pending' && (
+                                  <span className="text-[9px] px-1 py-0.5 rounded font-mono" style={{ color: agents.find(a => a.id === step.agentId)?.color, background: `${agents.find(a => a.id === step.agentId)?.color}15` }}>
+                                    {step.agentName}
+                                  </span>
+                                )}
+                              </div>
+                              {step.status === 'active' && (
+                                <p className="text-[10px] text-[oklch(0.4_0.02_200)] mt-0.5">{activeSubStep || step.detail}</p>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-[oklch(0.15_0.03_260)]">
+                      <span className="text-[10px] font-mono text-[oklch(0.4_0.02_200)]">
+                        {planSteps.filter(s => s.status === 'done').length}/{planSteps.length} fases completadas
+                      </span>
+                      <span className="text-[10px] font-mono text-[#06d6a0]">
+                        {Math.round((planSteps.filter(s => s.status === 'done').length / planSteps.length) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
-            <div ref={messagesEndRef} />
-          </div>
-        )}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+
+        {/* Code Preview Sidebar */}
+        <AnimatePresence>
+          {showCodePreview && previewCodeBlocks.length > 0 && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: '45%', opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="hidden md:flex flex-col border-l border-[oklch(0.2_0.03_260)] bg-[oklch(0.06_0.02_260)] overflow-hidden"
+            >
+              {/* Preview header */}
+              <div className="flex items-center justify-between px-3 py-2 border-b border-[oklch(0.2_0.03_260)] bg-[oklch(0.08_0.02_260)] shrink-0">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-[#8b5cf6]" />
+                  <span className="text-xs font-bold text-[#8b5cf6]">Vista Previa</span>
+                  <span className="text-[10px] font-mono text-[oklch(0.4_0.02_200)]">{previewCodeBlocks.length} archivos</span>
+                </div>
+                <button onClick={() => setShowCodePreview(false)} className="p-1 rounded-md text-[oklch(0.4_0.02_200)] hover:text-white hover:bg-[oklch(0.15_0.03_260)] transition-all">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* File tabs */}
+              <div className="flex items-center gap-0.5 px-2 py-1 border-b border-[oklch(0.15_0.02_260)] overflow-x-auto shrink-0">
+                {previewCodeBlocks.map((block, i) => (
+                  <button
+                    key={block.id}
+                    onClick={() => setActivePreviewBlock(i)}
+                    className={`px-2.5 py-1 text-[10px] font-mono rounded-md transition-all whitespace-nowrap ${activePreviewBlock === i ? 'bg-[#8b5cf6]/15 text-[#8b5cf6] border border-[#8b5cf6]/20' : 'text-[oklch(0.4_0.02_200)] hover:text-[oklch(0.6_0.02_200)] border border-transparent'}`}
+                  >
+                    {block.filename || `file-${i + 1}.${block.language}`}
+                  </button>
+                ))}
+              </div>
+
+              {/* Code display */}
+              <div className="flex-1 overflow-auto">
+                {previewCodeBlocks[activePreviewBlock] && (
+                  <SyntaxHighlighter
+                    language={previewCodeBlocks[activePreviewBlock].language}
+                    style={oneDark}
+                    customStyle={{
+                      margin: 0,
+                      padding: '12px',
+                      fontSize: '11px',
+                      lineHeight: '1.6',
+                      background: 'transparent',
+                    }}
+                    showLineNumbers
+                    lineNumberStyle={{ color: '#4a5568', minWidth: '2.5em', paddingRight: '1em' }}
+                  >
+                    {previewCodeBlocks[activePreviewBlock].code}
+                  </SyntaxHighlighter>
+                )}
+              </div>
+
+              {/* Publish button */}
+              <div className="px-3 py-3 border-t border-[oklch(0.2_0.03_260)] bg-[oklch(0.08_0.02_260)] shrink-0">
+                {publishedUrl ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#06d6a0]/10 border border-[#06d6a0]/20">
+                      <CheckCircle2 className="w-4 h-4 text-[#06d6a0]" />
+                      <span className="text-xs text-[#06d6a0] font-medium">Publicado</span>
+                    </div>
+                    <a
+                      href={publishedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg bg-[oklch(0.12_0.02_260)] border border-[oklch(0.2_0.03_260)] hover:border-[#06d6a0]/20 transition-all text-sm text-[oklch(0.7_0.02_200)] hover:text-[#06d6a0]"
+                    >
+                      <Globe className="w-4 h-4" />
+                      {publishedUrl}
+                      <ExternalLink className="w-3 h-3 opacity-50" />
+                    </a>
+                  </div>
+                ) : isPublishing ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[oklch(0.5_0.02_200)]">Publicando en Vercel...</span>
+                      <span className="text-[#06d6a0] font-mono">{publishProgress}%</span>
+                    </div>
+                    <div className="h-1.5 bg-[oklch(0.15_0.03_260)] rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] rounded-full"
+                        animate={{ width: `${publishProgress}%` }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handlePublish}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] text-sm font-bold hover:shadow-[0_0_20px_rgba(6,214,160,0.3)] transition-all"
+                  >
+                    <Globe className="w-4 h-4" />
+                    Publicar App
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Input */}
@@ -982,86 +1419,59 @@ export function ChatSection() {
               onChange={handleTextareaInput}
               onKeyDown={handleKeyDown}
               placeholder={`Pídele a ${currentModel.name} v${currentModel.version} que cree tu app...`}
-              className="min-h-[46px] max-h-[150px] resize-none bg-[oklch(0.12_0.02_260)] border-[oklch(0.25_0.04_260)] focus:border-[#06d6a0]/40 focus:ring-[#06d6a0]/20 text-sm rounded-xl pr-4 placeholder:text-[oklch(0.4_0.02_200)]"
-              rows={1}
-              disabled={isLoading}
+              className="min-h-[46px] max-h-[150px] resize-none bg-[oklch(0.1_0.02_260)] border-[oklch(0.25_0.04_260)] focus:border-[#06d6a0]/30 text-sm text-white placeholder:text-[oklch(0.35_0.02_200)] pr-12 rounded-xl"
             />
           </div>
-          {isLoading ? (
-            <Button
-              onClick={handleClear}
-              className="bg-red-500/80 hover:bg-red-500 text-white font-semibold border-0 rounded-xl h-[46px] w-[46px] p-0 transition-all shrink-0"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          ) : (
-            <Button
-              onClick={() => handleSend()}
-              disabled={!input.trim()}
-              className="bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-bold border-0 rounded-xl h-[46px] w-[46px] p-0 hover:shadow-[0_0_20px_rgba(6,214,160,0.3)] transition-all disabled:opacity-40 shrink-0"
-            >
-              <Send className="w-5 h-5" />
-            </Button>
-          )}
+          <Button
+            onClick={() => handleSend()}
+            disabled={isLoading || !input.trim()}
+            className="bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-bold hover:shadow-[0_0_20px_rgba(6,214,160,0.3)] transition-all border-0 px-4 py-3 rounded-xl disabled:opacity-40"
+          >
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+          </Button>
         </div>
-        <div className="flex items-center justify-between mt-2 max-w-4xl mx-auto">
-          <p className="text-[10px] text-[oklch(0.35_0.02_200)]">
-            Enter para enviar · Shift+Enter nueva línea · Auto-corrección activa
-          </p>
-          <div className="flex items-center gap-2 text-[10px] text-[oklch(0.3_0.02_200)]">
-            <Code2 className="w-3 h-3" />
-            <span>NexForge v{NEXFORGE_VERSION}</span>
-            <span>·</span>
-            <span>100% Gratis</span>
-            <span>·</span>
-            <span>OpenSource</span>
-          </div>
+        <div className="flex items-center justify-center gap-4 mt-2">
+          <span className="text-[10px] text-[oklch(0.3_0.02_200)]">4 Agentes: ARQ · CODE · QA · UX</span>
+          <span className="text-[10px] text-[oklch(0.3_0.02_200)]">·</span>
+          <span className="text-[10px] text-[oklch(0.3_0.02_200)]">Auto-Corrección</span>
+          <span className="text-[10px] text-[oklch(0.3_0.02_200)]">·</span>
+          <span className="text-[10px] text-[oklch(0.3_0.02_200)]">Vista Previa</span>
         </div>
       </div>
     </>
   )
 
-  if (isFullscreen) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="fixed inset-0 z-[100] flex flex-col bg-[oklch(0.08_0.02_260)]"
-      >
-        {chatContent}
-      </motion.div>
-    )
-  }
-
   return (
-    <section id="chat" className="relative py-24 md:py-32">
+    <section id="chat" className="relative py-12 md:py-16">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#06d6a0]/20 to-transparent" />
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
           className="text-center mb-8"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#06d6a0]/10 border border-[#06d6a0]/20 mb-4">
-            <Play className="w-4 h-4 text-[#06d6a0]" />
-            <span className="text-sm font-medium text-[#06d6a0]">Chat IA con Auto-Corrección</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            Habla con la{' '}
-            <span className="text-gradient">IA</span>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">
+            Crea con <span className="text-gradient">4 Agentes IA</span> en tiempo real
           </h2>
-          <p className="text-lg text-[oklch(0.6_0.02_200)] max-w-2xl mx-auto">
-            La IA planifica, diseña, codifica y se auto-corregirá en tiempo real. Edita, copia o escucha cada respuesta.
+          <p className="text-sm text-[oklch(0.5_0.02_200)] max-w-lg mx-auto">
+            ARQ diseña, CODE implementa, QA verifica y UX optimiza. La duración se adapta a la complejidad de tu proyecto.
           </p>
         </motion.div>
+
+        {/* Chat container */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="rounded-2xl overflow-hidden border border-[oklch(0.25_0.04_260)] bg-[oklch(0.1_0.02_260)]/80 backdrop-blur flex flex-col"
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className={`relative rounded-2xl border border-[oklch(0.25_0.04_260)] bg-[oklch(0.08_0.02_260)]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col ${
+            isFullscreen
+              ? 'fixed inset-0 z-[100] rounded-none'
+              : ''
+          }`}
         >
           {chatContent}
         </motion.div>

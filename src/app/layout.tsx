@@ -14,16 +14,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NexForge v0.4.0 — IA OpenSource con Auto-Corrección para Crear Apps Web",
-  description: "Plataforma 100% gratis, ilimitada y OpenSource impulsada por IA. Crea aplicaciones web completas con KODA 1.1, NOVA 0.9 y FLUX 0.7 — auto-corrección integrada, sin restricciones.",
-  keywords: ["NexForge", "IA", "OpenSource", "generador de apps", "KODA", "NOVA", "FLUX", "auto-corrección", "aplicaciones web", "gratis", "ilimitado"],
+  title: "NexForge v0.5.0 — 4 Agentes IA OpenSource para Crear Apps Web",
+  description: "Plataforma 100% gratis, ilimitada y OpenSource con 4 agentes IA especializados. ARQ diseña, CODE implementa, QA verifica y UX optimiza. Vista previa, sugerencias de mejora y publicación automática.",
+  keywords: ["NexForge", "IA", "OpenSource", "agentes IA", "generador de apps", "KODA", "NOVA", "FLUX", "ARQ", "CODE", "QA", "UX", "vista previa", "publicar", "auto-corrección", "aplicaciones web", "gratis", "ilimitado"],
   authors: [{ name: "NexForge Team" }],
   icons: {
     icon: "/logo-nexforge.png",
   },
   openGraph: {
-    title: "NexForge v0.4.0 — IA OpenSource con Auto-Corrección para Crear Apps Web",
-    description: "100% Gratis · Ilimitado · OpenSource · Auto-Corrección · Crea apps web completas con IA",
+    title: "NexForge v0.5.0 — 4 Agentes IA OpenSource para Crear Apps Web",
+    description: "4 Agentes · Vista Previa · Publicar · Sugerencias · OpenSource · Crea apps web completas con IA",
     type: "website",
   },
 };
@@ -42,5 +42,5 @@ export default function RootLayout({
         <Toaster />
       </body>
     </html>
-  );
+  )
 }
