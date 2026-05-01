@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   keywords: ["NexForge", "IA", "OpenSource", "agentes IA", "generador de apps", "KODA", "NOVA", "FLUX", "ARQ", "CODE", "QA", "UX", "vista previa", "publicar", "auto-corrección", "aplicaciones web", "gratis", "ilimitado"],
   authors: [{ name: "NexForge Team" }],
   icons: {
-    icon: "/logo-nexforge.png",
+    icon: process.env.NEXT_STATIC_EXPORT === 'true' ? '/nexforge/logo-nexforge.png' : '/logo-nexforge.png',
   },
   openGraph: {
     title: "NexForge v0.5.0 — 4 Agentes IA OpenSource para Crear Apps Web",
