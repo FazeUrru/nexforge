@@ -42,3 +42,33 @@ Stage Summary:
 - Server monitor: health check every 15s, auto-restart on crash, max 10 restarts/5min
 - Health API: http://localhost:3000/api/health
 - Scripts: npm run dev:stable (auto-stable dev), npm run health (check status)
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix GitHub Pages deployment for NexForge - replace nexforge.dev with fazeurru.github.io/nexforge/
+
+Work Log:
+- Investigated the error at https://fazeurru.github.io/nexforge/
+- Identified root cause: Chat component calls /api/chat which doesn't exist in static GitHub Pages deployment
+- Found isStaticMode variable was defined but never used to bypass API calls
+- Found favicon path /logo-nexforge.png not prefixed with /nexforge/ basePath
+- Found hero background image url(/hero-bg.png) not prefixed with basePath
+- Found GitHub repo homepage still pointing to nexforge.dev
+- Found GitHub repo description still showing v0.4.0
+- Fixed chat.tsx: Added getIsStaticMode() function with demo responses for static mode
+- Fixed chat.tsx: Demo responses use string concatenation to avoid template literal interpolation issues with JSX ${} syntax
+- Fixed chat.tsx: handleSend(), handleSaveEdit(), and fetchSuggestions() all respect static mode
+- Fixed chat.tsx: Static mode shows "Modo Demo · Sin servidor" indicator
+- Fixed hero.tsx: Background image path uses /nexforge/hero-bg.png on GitHub Pages
+- Fixed layout.tsx: Favicon path conditionally uses /nexforge/ prefix for static export
+- Updated GitHub repo homepage from https://nexforge.dev to https://fazeurru.github.io/nexforge/
+- Updated GitHub repo description to v0.5.0 with full feature list
+- Pushed 4 commits to fix build errors (template literal interpolation, isStaticMode → getIsStaticMode())
+- Final build succeeded: Run #25216461319 completed (success)
+
+Stage Summary:
+- Website https://fazeurru.github.io/nexforge/ is now fully functional
+- Chat works in demo mode on GitHub Pages (no API required)
+- All assets load correctly with /nexforge/ basePath
+- GitHub repo homepage and description updated
+- Auto-deploy via GitHub Actions confirmed working
