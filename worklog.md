@@ -59,3 +59,37 @@ Stage Summary:
 - 3 modelos seleccionables con personalidades distintas
 - UI completa: mensajes, input, prompts sugeridos, controles
 - API backend funcional con manejo de errores
+
+---
+Task ID: 3
+Agent: main
+Task: Corregir IA que no responde, hacer IA más inteligente/rápida, chat a pantalla completa
+
+Work Log:
+- Diagnosticado error: API usaba streaming pero frontend esperaba JSON (response.json())
+- Reescrita API /api/chat/route.ts con streaming SSE correcto
+- Mejorados system prompts de los 3 modelos con instrucciones más detalladas y técnicas
+- KODA 0.7: temp 0.6, max 8192 tokens, prompt de elite architect con expertise específico
+- NOVA 0.5: temp 0.7, max 6144 tokens, prompt de senior developer didáctico
+- FLUX 0.3: temp 0.5, max 4096 tokens, prompt de velocidad pura "code first"
+- Contexto limitado a últimos 10 mensajes para mayor velocidad
+- Reescrito componente ChatSection completo:
+  - Streaming en tiempo real: la respuesta aparece palabra por palabra
+  - Cursor parpadeante durante streaming
+  - Botón de parar generación (X roja)
+  - Modo pantalla completa (fixed overlay)
+  - Botón maximizar en header del chat
+  - Markdown rendering con react-markdown (código, listas, headings)
+  - Estilos prose para bloques de código con syntax highlighting
+  - Prompts sugeridos con emojis
+  - Saludo personalizado según modelo seleccionado
+- Corregido import erróneo en page.tsx (components/opensource → sections/opensource)
+- Lint pasado sin errores
+- Servidor compilando correctamente
+
+Stage Summary:
+- Bug corregido: streaming SSE funcionando correctamente
+- IA más inteligente: system prompts mejorados con expertise técnica detallada
+- IA más rápida: contexto limitado, temperaturas optimizadas, streaming en tiempo real
+- Chat a pantalla completa: modo overlay con botón maximizar
+- Markdown rendering para respuestas con código
