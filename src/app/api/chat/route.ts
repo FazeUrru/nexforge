@@ -96,7 +96,6 @@ RULES:
   },
 }
 
-// Agent-specific system prompts for specialized phases
 const AGENT_PROMPTS = {
   arq: `You are ARQ, the Architecture Agent from NexForge v0.5.0. Analyze the user's app request and provide a detailed architecture plan including:
 1. System architecture diagram description
@@ -105,9 +104,7 @@ const AGENT_PROMPTS = {
 4. Technology stack choices
 5. Folder structure
 Respond in the user's language. Be thorough and specific.`,
-
   code: `You are CODE, the Implementation Agent from NexForge v0.5.0. Given the architecture plan, generate complete, production-ready code. Include ALL files - never use "..." or "// rest of code". Use React 19, Next.js 16, TypeScript, Tailwind CSS, shadcn/ui. Respond in the user's language.`,
-
   qa: `You are QA, the Quality Agent from NexForge v0.5.0. Review the generated code for:
 1. Type errors and missing imports
 2. Logic bugs and edge cases
@@ -115,7 +112,6 @@ Respond in the user's language. Be thorough and specific.`,
 4. Performance issues
 5. Best practices compliance
 List specific issues found and provide corrected code snippets. Respond in the user's language.`,
-
   ux: `You are UX, the Design Agent from NexForge v0.5.0. Analyze the app and suggest:
 1. UI/UX improvements
 2. Accessibility enhancements
@@ -123,7 +119,6 @@ List specific issues found and provide corrected code snippets. Respond in the u
 4. Animation and interaction improvements
 5. Design system consistency
 Provide specific, actionable suggestions with code examples. Respond in the user's language.`,
-
   suggest: `You are a suggestion engine for NexForge v0.5.0. Given an app description or code, suggest 5 specific, actionable improvements. Each suggestion should have a title and a brief description of what to implement. Format as JSON array: [{"title":"...","description":"..."}]. Respond in the user's language.`,
 }
 
@@ -136,7 +131,6 @@ async function callAI(
 ): Promise<string> {
   try {
     const zai = await ZAI.create()
-
     const completion = await zai.chat.completions.create({
       messages: messages.map((m) => ({
         role: m.role as 'system' | 'user' | 'assistant',
@@ -145,7 +139,6 @@ async function callAI(
       temperature: config.temperature,
       max_tokens: config.maxTokens,
     })
-
     const content = completion.choices?.[0]?.message?.content
     if (content && content.trim().length > 0) {
       return content
@@ -197,13 +190,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Se requieren mensajes válidos' }, { status: 400 })
     }
 
-    // Handle agent-specific calls
     if (agent && agent in AGENT_PROMPTS) {
       const recentMessages = messages.slice(-4)
-      const agentResult = await callAgent(
-        agent as keyof typeof AGENT_PROMPTS,
-        recentMessages
-      )
+      const agentResult = await callAgent(agent as keyof typeof AGENT_PROMPTS, recentMessages)
       return NextResponse.json({
         message: agentResult || 'El agente no pudo generar una respuesta.',
         agent,
@@ -213,7 +202,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Handle suggestion requests
     if (agent === 'suggest') {
       const recentMessages = messages.slice(-3)
       const suggestions = await callAgent('suggest', recentMessages)
@@ -236,7 +224,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Keep last 6 messages for better context
     const recentMessages = messages.slice(-6)
 
     let result = await callAI(
@@ -247,7 +234,6 @@ export async function POST(request: NextRequest) {
       config
     )
 
-    // Auto-correction: if enabled, do a self-review pass
     let selfCorrected = false
     if (enableSelfCorrection && result.length > 100) {
       try {

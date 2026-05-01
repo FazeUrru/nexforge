@@ -12,7 +12,7 @@ import {
   Copy, Check, Volume2, VolumeX, Pencil, MessageSquare,
   GitBranch, RefreshCw, Eye, Globe, Lightbulb, Users,
   Architecture, Wrench, TestTube2, Paintbrush, ArrowRight,
-  ExternalLink, Clock, Layers, Activity,
+  ExternalLink, Clock, Layers, Activity, Github,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -342,6 +342,12 @@ function extractCodeBlocks(content: string): CodeBlock[] {
 }
 
 // ─── Main Component ──────────────────────────────────────────────
+
+// Detect if running on GitHub Pages (static mode, no API routes)
+const isStaticMode = typeof window !== 'undefined' && (
+  window.location.hostname.includes('github.io') ||
+  window.location.pathname.startsWith('/nexforge')
+)
 
 export function ChatSection() {
   const [selectedModel, setSelectedModel] = useState<string>('koda-1.3')
@@ -1005,8 +1011,10 @@ export function ChatSection() {
             </AnimatePresence>
           </div>
           <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#06d6a0]/5 border border-[#06d6a0]/10">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#06d6a0] animate-pulse" />
-            <span className="text-[10px] text-[#06d6a0] font-medium">4 Agentes · Auto-Corrección</span>
+            <div className={`w-1.5 h-1.5 rounded-full ${isStaticMode ? 'bg-[#f59e0b]' : 'bg-[#06d6a0] animate-pulse'}`} />
+            <span className={`text-[10px] font-medium ${isStaticMode ? 'text-[#f59e0b]' : 'text-[#06d6a0]'}`}>
+              {isStaticMode ? 'Modo Demo · Sin servidor' : '4 Agentes · Auto-Corrección'}
+            </span>
           </div>
           {complexityInfo && isLoading && (
             <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#8b5cf6]/10 border border-[#8b5cf6]/20">
@@ -1051,6 +1059,17 @@ export function ChatSection() {
         <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 scroll-smooth ${isFullscreen ? '' : 'h-[480px] sm:h-[540px]'}`}>
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-4">
+              {isStaticMode && (
+                <div className="mb-6 px-4 py-3 rounded-xl bg-[#f59e0b]/10 border border-[#f59e0b]/20 max-w-md">
+                  <p className="text-xs text-[#f59e0b] font-medium mb-1">Modo Demostración</p>
+                  <p className="text-[11px] text-[oklch(0.5_0.02_200)]">
+                    Estás viendo la versión estática en GitHub Pages. Para usar el chat con IA, clona el repo y ejecuta <code className="px-1 py-0.5 rounded bg-[oklch(0.12_0.02_260)] text-[#06d6a0] font-mono">npm run dev</code>
+                  </p>
+                  <a href="https://github.com/FazeUrru/nexforge" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-[11px] text-[#06d6a0] hover:underline">
+                    <Github className="w-3 h-3" /> Ver en GitHub
+                  </a>
+                </div>
+              )}
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#06d6a0]/20 to-[#00ffc8]/10 border border-[#06d6a0]/20 flex items-center justify-center mb-6 animate-pulse-glow">
                 <Sparkles className="w-10 h-10 text-[#06d6a0]" />
               </div>
