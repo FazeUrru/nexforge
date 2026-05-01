@@ -2,6 +2,7 @@
 
 import { Navbar } from '@/components/sections/navbar'
 import { Hero } from '@/components/sections/hero'
+import { ChatSection } from '@/components/sections/chat'
 import { ModelsSection } from '@/components/sections/models'
 import { FeaturesSection } from '@/components/sections/features'
 import { DemoSection } from '@/components/sections/demo'
@@ -15,6 +16,7 @@ export default function Home() {
       <Navbar />
       <main className="flex-1">
         <Hero />
+        <ChatSection />
         <ModelsSection />
         <FeaturesSection />
         <DemoSection />

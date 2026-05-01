@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Menu, X, Github, Terminal } from 'lucide-react'
 
 const navLinks = [
+  { href: '#chat', label: 'Chat IA' },
   { href: '#modelos', label: 'Modelos' },
   { href: '#features', label: 'Features' },
   { href: '#demo', label: 'Demo' },

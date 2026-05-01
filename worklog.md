@@ -30,3 +30,32 @@ Stage Summary:
 - Responsive design con menú móvil
 - Animaciones con framer-motion
 - Lint pasado sin errores
+
+---
+Task ID: 2
+Agent: main
+Task: Añadir chat interactivo con las 3 IAs
+
+Work Log:
+- Creada API route /api/chat/route.ts con z-ai-web-dev-sdk
+- Configurados 3 modelos con system prompts personalizados y parámetros distintos
+- KODA 0.7: temp 0.7, max 4096 tokens, system prompt full-stack experto
+- NOVA 0.5: temp 0.8, max 3072 tokens, system prompt versátil y didáctico
+- FLUX 0.3: temp 0.9, max 2048 tokens, system prompt rápido y directo
+- Creado componente ChatSection completo con:
+  - Selector de modelo con dropdown animado
+  - Área de mensajes con scroll y avatares
+  - Input con auto-resize y envío con Enter
+  - Prompts sugeridos para empezar
+  - Indicador de carga con animación
+  - Botones de reintentar y limpiar chat
+  - Respuestas de la IA con nombre del modelo
+- Actualizado navbar con link "Chat IA"
+- Integrado ChatSection en page.tsx (después del Hero)
+- Lint pasado sin errores
+
+Stage Summary:
+- Chat interactivo funcional conectado a z-ai-web-dev-sdk
+- 3 modelos seleccionables con personalidades distintas
+- UI completa: mensajes, input, prompts sugeridos, controles
+- API backend funcional con manejo de errores
