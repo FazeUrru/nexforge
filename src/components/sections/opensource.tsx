@@ -18,7 +18,7 @@ import {
   FileCode2,
 } from 'lucide-react'
 
-const GITHUB_REPO_URL = 'https://github.com/nexforge/nexforge'
+const GITHUB_REPO_URL = 'https://github.com/FazeUrru/nexforge'
 
 const stats = [
   { icon: Star, label: 'GitHub Stars', value: '12.4K', color: '#e5c07b' },

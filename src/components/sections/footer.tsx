@@ -2,7 +2,7 @@
 
 import { Terminal, Github, Twitter, MessageCircle, ExternalLink } from 'lucide-react'
 
-const GITHUB_REPO_URL = 'https://github.com/nexforge/nexforge'
+const GITHUB_REPO_URL = 'https://github.com/FazeUrru/nexforge'
 
 const footerLinks = {
   Producto: [

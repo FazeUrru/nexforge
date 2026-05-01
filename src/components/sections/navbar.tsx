@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Menu, X, Github, Terminal, ExternalLink } from 'lucide-react'
 
-const GITHUB_REPO_URL = 'https://github.com/nexforge/nexforge'
+const GITHUB_REPO_URL = 'https://github.com/FazeUrru/nexforge'
 
 const navLinks = [
   { href: '#chat', label: 'Chat IA' },
