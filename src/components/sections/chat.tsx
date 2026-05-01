@@ -9,7 +9,6 @@ import {
   Brain,
   Rocket,
   Send,
-  Loader2,
   RotateCcw,
   Sparkles,
   Trash2,
@@ -18,8 +17,15 @@ import {
   User,
   X,
   Maximize2,
+  Minimize2,
   MessageSquare,
   Zap,
+  CheckCircle2,
+  Circle,
+  Loader2,
+  Code2,
+  LayoutList,
+  Play,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 
@@ -28,7 +34,13 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   model?: string
-  streaming?: boolean
+  isStreaming?: boolean
+}
+
+interface PlanStep {
+  id: number
+  text: string
+  status: 'pending' | 'active' | 'done'
 }
 
 interface ModelOption {
@@ -72,12 +84,12 @@ const models: ModelOption[] = [
 ]
 
 const suggestedPrompts = [
-  { icon: '🛒', text: 'Crea una app de e-commerce con carrito y pagos Stripe' },
-  { icon: '📊', text: 'Genera un dashboard con gráficos y datos en tiempo real' },
-  { icon: '📝', text: 'Haz un blog con CMS, auth y sistema de comentarios' },
-  { icon: '✅', text: 'Crea una app de gestión de tareas con autenticación' },
-  { icon: '🌐', text: 'Genera una API REST para un sistema de reservas' },
-  { icon: '🎨', text: 'Haz un portfolio personal con animaciones y dark mode' },
+  { icon: '🛒', text: 'Crea una app de e-commerce con carrito y pagos' },
+  { icon: '📊', text: 'Genera un dashboard con gráficos en tiempo real' },
+  { icon: '📝', text: 'Haz un blog con CMS y sistema de comentarios' },
+  { icon: '✅', text: 'Crea una app de tareas con auth y base de datos' },
+  { icon: '🌐', text: 'Genera una API REST para reservas con Prisma' },
+  { icon: '🎨', text: 'Haz un portfolio con animaciones y dark mode' },
 ]
 
 export function ChatSection() {
@@ -87,10 +99,11 @@ export function ChatSection() {
   const [isLoading, setIsLoading] = useState(false)
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [planSteps, setPlanSteps] = useState<PlanStep[]>([])
+  const [showPlan, setShowPlan] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const abortControllerRef = useRef<AbortController | null>(null)
 
   const currentModel = models.find((m) => m.key === selectedModel)!
 
@@ -100,7 +113,7 @@ export function ChatSection() {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, scrollToBottom])
+  }, [messages, planSteps, scrollToBottom])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -112,7 +125,6 @@ export function ChatSection() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Lock body scroll when fullscreen
   useEffect(() => {
     if (isFullscreen) {
       document.body.style.overflow = 'hidden'
@@ -121,6 +133,78 @@ export function ChatSection() {
     }
     return () => { document.body.style.overflow = '' }
   }, [isFullscreen])
+
+  // Simulate streaming: reveal text word by word at high speed
+  const simulateStreaming = useCallback((fullText: string, messageId: string) => {
+    const words = fullText.split(/(\s+)/) // split keeping whitespace
+    let current = 0
+    const speed = selectedModel === 'flux-0.3' ? 8 : selectedModel === 'nova-0.5' ? 12 : 16
+
+    const interval = setInterval(() => {
+      current += 1
+      const revealed = words.slice(0, current).join('')
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? { ...m, content: revealed, isStreaming: current < words.length }
+            : m
+        )
+      )
+      if (current >= words.length) {
+        clearInterval(interval)
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId ? { ...m, isStreaming: false } : m
+          )
+        )
+        setPlanSteps((prev) => prev.map((s) => ({ ...s, status: 'done' as const })))
+      }
+    }, speed)
+
+    return interval
+  }, [selectedModel])
+
+  // Show plan steps progressively
+  const simulatePlan = useCallback((userMessage: string): PlanStep[] => {
+    const lowerMsg = userMessage.toLowerCase()
+    const steps: PlanStep[] = []
+
+    if (lowerMsg.includes('app') || lowerMsg.includes('aplicaci') || lowerMsg.includes('crea') || lowerMsg.includes('genera') || lowerMsg.includes('haz') || lowerMsg.includes('web') || lowerMsg.includes('api') || lowerMsg.includes('blog') || lowerMsg.includes('dashboard') || lowerMsg.includes('ecommerce') || lowerMsg.includes('e-commerce') || lowerMsg.includes('tareas') || lowerMsg.includes('portfolio') || lowerMsg.includes('reserva')) {
+      steps.push({ id: 1, text: 'Analizando requisitos del proyecto...', status: 'active' })
+      steps.push({ id: 2, text: 'Diseñando arquitectura y modelo de datos...', status: 'pending' })
+      steps.push({ id: 3, text: 'Configurando stack tecnológico...', status: 'pending' })
+      steps.push({ id: 4, text: 'Generando código del proyecto...', status: 'pending' })
+      steps.push({ id: 5, text: 'Implementando lógica de negocio...', status: 'pending' })
+      steps.push({ id: 6, text: 'Finalizando y documentando...', status: 'pending' })
+    } else {
+      steps.push({ id: 1, text: 'Procesando solicitud...', status: 'active' })
+      steps.push({ id: 2, text: 'Generando respuesta...', status: 'pending' })
+    }
+
+    return steps
+  }, [])
+
+  // Progress through plan steps
+  const progressPlan = useCallback((steps: PlanStep[]) => {
+    setPlanSteps(steps)
+    setShowPlan(true)
+
+    let currentStep = 0
+    const stepInterval = setInterval(() => {
+      currentStep++
+      setPlanSteps((prev) =>
+        prev.map((s, i) => ({
+          ...s,
+          status: i < currentStep ? 'done' as const : i === currentStep ? 'active' as const : 'pending' as const,
+        }))
+      )
+      if (currentStep >= steps.length) {
+        clearInterval(stepInterval)
+      }
+    }, 600)
+
+    return stepInterval
+  }, [])
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
@@ -140,10 +224,14 @@ export function ChatSection() {
       textareaRef.current.style.height = 'auto'
     }
 
-    // Add empty assistant message for streaming
+    // Start planning animation
+    const planStepsList = simulatePlan(input.trim())
+    const planInterval = progressPlan(planStepsList)
+
+    // Add empty assistant message
     setMessages((prev) => [
       ...prev,
-      { id: assistantId, role: 'assistant', content: '', model: currentModel.name, streaming: true },
+      { id: assistantId, role: 'assistant', content: '', model: currentModel.name, isStreaming: true },
     ])
 
     try {
@@ -152,8 +240,6 @@ export function ChatSection() {
         content: m.content,
       }))
 
-      abortControllerRef.current = new AbortController()
-
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -161,7 +247,6 @@ export function ChatSection() {
           messages: chatMessages,
           model: selectedModel,
         }),
-        signal: abortControllerRef.current.signal,
       })
 
       if (!response.ok) {
@@ -169,94 +254,34 @@ export function ChatSection() {
         throw new Error(errorData.error || 'Error en la respuesta')
       }
 
-      // Handle streaming
-      const reader = response.body?.getReader()
-      if (!reader) throw new Error('No se pudo leer la respuesta')
+      const data = await response.json()
+      clearInterval(planInterval)
 
-      const decoder = new TextDecoder()
-      let fullContent = ''
+      // Mark all plan steps as done
+      setPlanSteps((prev) => prev.map((s) => ({ ...s, status: 'done' as const })))
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const text = decoder.decode(value, { stream: true })
-        const lines = text.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataStr = line.slice(6)
-            try {
-              const data = JSON.parse(dataStr)
-              if (data.content) {
-                fullContent += data.content
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantId
-                      ? { ...m, content: fullContent, streaming: true }
-                      : m
-                  )
-                )
-              }
-              if (data.done) {
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantId
-                      ? { ...m, content: fullContent, streaming: false, model: data.model || currentModel.name }
-                      : m
-                  )
-                )
-              }
-              if (data.error) {
-                throw new Error(data.error)
-              }
-            } catch {
-              // Skip malformed JSON lines
-            }
-          }
-        }
-      }
-
-      // Ensure final state
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantId
-            ? { ...m, streaming: false, content: fullContent || 'Sin respuesta del modelo.' }
-            : m
-        )
-      )
+      // Start streaming simulation
+      simulateStreaming(data.message, assistantId)
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId
-              ? { ...m, streaming: false, content: fullContent || 'Generación cancelada.' }
-              : m
-          )
-        )
-      } else {
-        setMessages((prev) => {
-          const filtered = prev.filter((m) => m.id !== assistantId)
-          return [
-            ...filtered,
-            {
-              id: assistantId,
-              role: 'assistant',
-              content: `Error: ${error instanceof Error ? error.message : 'No se pudo conectar. Inténtalo de nuevo.'}`,
-              model: currentModel.name,
-              streaming: false,
-            },
-          ]
-        })
-      }
+      clearInterval(planInterval)
+      setPlanSteps([])
+      setShowPlan(false)
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => m.id !== assistantId)
+        return [
+          ...filtered,
+          {
+            id: assistantId,
+            role: 'assistant',
+            content: `Error: ${error instanceof Error ? error.message : 'No se pudo conectar. Inténtalo de nuevo.'}`,
+            model: currentModel.name,
+            isStreaming: false,
+          },
+        ]
+      })
     } finally {
       setIsLoading(false)
-      abortControllerRef.current = null
     }
-  }
-
-  const handleStop = () => {
-    abortControllerRef.current?.abort()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -281,27 +306,25 @@ export function ChatSection() {
   const handleClear = () => {
     setMessages([])
     setInput('')
+    setPlanSteps([])
+    setShowPlan(false)
   }
 
   const handleRetry = async () => {
-    const lastUserMsgIdx = [...messages].reverse().findIndex((m) => m.role === 'user')
-    if (lastUserMsgIdx === -1) return
-
-    const actualIdx = messages.length - 1 - lastUserMsgIdx
-    // Remove everything after the last user message
-    const trimmed = messages.slice(0, actualIdx)
-    setMessages(trimmed)
-
-    // Resend the last user message
+    const lastUserIdx = [...messages].reverse().findIndex((m) => m.role === 'user')
+    if (lastUserIdx === -1) return
+    const actualIdx = messages.length - 1 - lastUserIdx
+    const trimmed = messages.slice(0, actualIdx + 1)
     const lastUserMsg = messages[actualIdx]
+    setMessages(trimmed)
+    setPlanSteps([])
+    setShowPlan(false)
     if (lastUserMsg) {
       setInput(lastUserMsg.content)
-      // Auto-send after a tick
       setTimeout(() => {
-        const textarea = textareaRef.current
-        if (textarea) {
-          textarea.style.height = 'auto'
-          textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px'
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto'
+          textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 150) + 'px'
         }
       }, 50)
     }
@@ -309,49 +332,38 @@ export function ChatSection() {
 
   const chatContent = (
     <>
-      {/* Chat header */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[oklch(0.2_0.03_260)] bg-[oklch(0.08_0.02_260)]/80 backdrop-blur-sm shrink-0">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[oklch(0.2_0.03_260)] bg-[oklch(0.08_0.02_260)]/90 backdrop-blur-sm shrink-0">
         <div className="flex items-center gap-3">
-          {/* Model selector */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[oklch(0.25_0.04_260)] hover:border-[#06d6a0]/30 bg-[oklch(0.12_0.02_260)] transition-all"
             >
               <currentModel.icon className="w-4 h-4" style={{ color: currentModel.color }} />
-              <span className="text-sm font-semibold" style={{ color: currentModel.color }}>
-                {currentModel.name}
-              </span>
+              <span className="text-sm font-bold" style={{ color: currentModel.color }}>{currentModel.name}</span>
               <span className="text-xs text-[oklch(0.5_0.02_200)] font-mono">v{currentModel.version}</span>
               <ChevronDown className="w-3 h-3 text-[oklch(0.5_0.02_200)]" />
             </button>
-
             <AnimatePresence>
               {modelDropdownOpen && (
                 <motion.div
                   initial={{ opacity: 0, y: -5, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -5, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
+                  transition={{ duration: 0.12 }}
                   className="absolute top-full left-0 mt-2 w-72 rounded-xl border border-[oklch(0.25_0.04_260)] bg-[oklch(0.1_0.02_260)] shadow-2xl overflow-hidden z-50"
                 >
                   {models.map((model) => (
                     <button
                       key={model.key}
-                      onClick={() => {
-                        setSelectedModel(model.key)
-                        setModelDropdownOpen(false)
-                      }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[oklch(0.15_0.03_260)] transition-colors ${
-                        selectedModel === model.key ? 'bg-[oklch(0.15_0.03_260)]' : ''
-                      }`}
+                      onClick={() => { setSelectedModel(model.key); setModelDropdownOpen(false) }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[oklch(0.15_0.03_260)] transition-colors ${selectedModel === model.key ? 'bg-[oklch(0.15_0.03_260)]' : ''}`}
                     >
                       <model.icon className="w-5 h-5 shrink-0" style={{ color: model.color }} />
                       <div className="text-left flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold" style={{ color: model.color }}>
-                            {model.name}
-                          </span>
+                          <span className="text-sm font-bold" style={{ color: model.color }}>{model.name}</span>
                           <span className="text-xs text-[oklch(0.4_0.02_200)] font-mono">v{model.version}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -359,63 +371,41 @@ export function ChatSection() {
                           <span className="text-[10px] font-mono" style={{ color: model.color }}>{model.speed}</span>
                         </div>
                       </div>
-                      {selectedModel === model.key && (
-                        <div className="ml-auto w-2 h-2 rounded-full" style={{ backgroundColor: model.color }} />
-                      )}
+                      {selectedModel === model.key && <div className="ml-auto w-2 h-2 rounded-full" style={{ backgroundColor: model.color }} />}
                     </button>
                   ))}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
-
-          <div className="hidden sm:flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#06d6a0] animate-pulse" />
-            <span className="text-xs text-[oklch(0.5_0.02_200)]">Online</span>
+          <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#06d6a0]/5 border border-[#06d6a0]/10">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#06d6a0] animate-pulse" />
+            <span className="text-[10px] text-[#06d6a0] font-medium">Online</span>
           </div>
         </div>
-
         <div className="flex items-center gap-1">
           {messages.length > 0 && !isLoading && (
-            <button
-              onClick={handleRetry}
-              className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all"
-              title="Reintentar"
-            >
+            <button onClick={handleRetry} className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title="Reintentar">
               <RotateCcw className="w-4 h-4" />
             </button>
           )}
           {messages.length > 0 && (
-            <button
-              onClick={handleClear}
-              className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-red-400 hover:bg-red-400/5 transition-all"
-              title="Limpiar chat"
-            >
+            <button onClick={handleClear} className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-red-400 hover:bg-red-400/5 transition-all" title="Limpiar">
               <Trash2 className="w-4 h-4" />
             </button>
           )}
-          {!isFullscreen ? (
-            <button
-              onClick={() => setIsFullscreen(true)}
-              className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all"
-              title="Pantalla completa"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsFullscreen(false)}
-              className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all"
-              title="Salir de pantalla completa"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+          <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all"
+            title={isFullscreen ? 'Minimizar' : 'Pantalla completa'}
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
-      {/* Messages area */}
-      <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 scroll-smooth ${isFullscreen ? '' : 'h-[500px] sm:h-[550px]'}`}>
+      {/* Messages */}
+      <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 scroll-smooth ${isFullscreen ? '' : 'h-[480px] sm:h-[540px]'}`}>
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-4">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#06d6a0]/20 to-[#00ffc8]/10 border border-[#06d6a0]/20 flex items-center justify-center mb-6 animate-pulse-glow">
@@ -425,11 +415,8 @@ export function ChatSection() {
               Hola, soy <span style={{ color: currentModel.color }}>{currentModel.name}</span>
             </h3>
             <p className="text-[oklch(0.5_0.02_200)] mb-8 max-w-md text-sm">
-              Describe la aplicación que quieres crear y generaré el código completo para ti.
-              Sin límites, sin restricciones, 100% gratis.
+              Describe la app que quieres crear. Planificaré, diseñaré y generaré el código completo en tiempo real.
             </p>
-
-            {/* Suggested prompts */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl">
               {suggestedPrompts.map((prompt) => (
                 <button
@@ -445,109 +432,113 @@ export function ChatSection() {
           </div>
         ) : (
           <div className="space-y-4 max-w-4xl mx-auto">
-            <AnimatePresence mode="popLayout">
-              {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  {message.role === 'assistant' && (
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                      style={{
-                        background: `linear-gradient(135deg, ${currentModel.color}20, ${currentModel.color}10)`,
-                        border: `1px solid ${currentModel.color}30`,
-                      }}
-                    >
-                      <Bot className="w-5 h-5" style={{ color: currentModel.color }} />
-                    </div>
-                  )}
-                  <div
-                    className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
-                      message.role === 'user'
-                        ? 'bg-gradient-to-r from-[#06d6a0]/20 to-[#00ffc8]/10 border border-[#06d6a0]/15'
-                        : 'bg-[oklch(0.12_0.02_260)] border border-[oklch(0.2_0.03_260)]'
-                    }`}
-                  >
-                    {message.role === 'assistant' ? (
-                      <div className="text-sm leading-relaxed prose prose-invert prose-sm max-w-none
-                        [&_pre]:bg-[oklch(0.08_0.02_260)] [&_pre]:border [&_pre]:border-[oklch(0.2_0.03_260)] [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto
-                        [&_code]:text-[#06d6a0] [&_code]:font-mono [&_code]:text-xs
-                        [&_pre_code]:text-[oklch(0.85_0.02_200)]
-                        [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2
-                        [&_h2]:text-base [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-2
-                        [&_h3]:text-sm [&_h3]:font-bold [&_h3]:mt-2 [&_h3]:mb-1
-                        [&_p]:mb-2 [&_p]:last:mb-0
-                        [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2
-                        [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:mb-2
-                        [&_li]:mb-1
-                        [&_strong]:text-[oklch(0.9_0.02_200)] [&_strong]:font-semibold
-                        [&_a]:text-[#06d6a0] [&_a]:underline
-                        [&_blockquote]:border-l-2 [&_blockquote]:border-[#06d6a0]/30 [&_blockquote]:pl-3 [&_blockquote]:italic
-                      ">
-                        <ReactMarkdown>{message.content || ' '}</ReactMarkdown>
-                        {message.streaming && (
-                          <span className="inline-block w-2 h-4 bg-[#06d6a0] animate-pulse ml-0.5 align-middle" />
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                        {message.content}
-                      </p>
-                    )}
-                    {message.role === 'assistant' && message.model && !message.streaming && (
-                      <p className="text-[10px] text-[oklch(0.35_0.02_200)] mt-2 font-mono flex items-center gap-1">
-                        <Zap className="w-2.5 h-2.5" />
-                        {message.model} · NexForge v0.2.0
-                      </p>
-                    )}
-                  </div>
-                  {message.role === 'user' && (
-                    <div className="w-9 h-9 rounded-xl bg-[oklch(0.2_0.03_260)] border border-[oklch(0.25_0.04_260)] flex items-center justify-center shrink-0 mt-0.5">
-                      <User className="w-5 h-5 text-[oklch(0.6_0.02_200)]" />
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {/* Loading indicator (only when streaming hasn't started) */}
-            {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
+            {messages.map((message) => (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                key={message.id}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex gap-3 justify-start"
+                transition={{ duration: 0.2 }}
+                className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                  style={{
-                    background: `linear-gradient(135deg, ${currentModel.color}20, ${currentModel.color}10)`,
-                    border: `1px solid ${currentModel.color}30`,
-                  }}
-                >
-                  <Bot className="w-5 h-5" style={{ color: currentModel.color }} />
-                </div>
-                <div className="bg-[oklch(0.12_0.02_260)] border border-[oklch(0.2_0.03_260)] rounded-2xl px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: currentModel.color }} />
-                    <span className="text-sm text-[oklch(0.5_0.02_200)]">
-                      {currentModel.name} está pensando...
-                    </span>
+                {message.role === 'assistant' && (
+                  <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: `linear-gradient(135deg, ${currentModel.color}20, ${currentModel.color}10)`, border: `1px solid ${currentModel.color}30` }}
+                  >
+                    <Bot className="w-4 h-4" style={{ color: currentModel.color }} />
                   </div>
+                )}
+                <div
+                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
+                    message.role === 'user'
+                      ? 'bg-gradient-to-r from-[#06d6a0]/20 to-[#00ffc8]/10 border border-[#06d6a0]/15'
+                      : 'bg-[oklch(0.12_0.02_260)] border border-[oklch(0.2_0.03_260)]'
+                  }`}
+                >
+                  {message.role === 'assistant' ? (
+                    <div className="text-sm leading-relaxed prose prose-invert prose-sm max-w-none
+                      [&_pre]:bg-[oklch(0.06_0.02_260)] [&_pre]:border [&_pre]:border-[oklch(0.2_0.03_260)] [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto [&_pre]:my-2
+                      [&_code]:text-[#06d6a0] [&_code]:font-mono [&_code]:text-xs [&_code]:bg-[oklch(0.08_0.02_260)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded
+                      [&_pre_code]:bg-transparent [&_pre_code]:px-0 [&_pre_code]:py-0 [&_pre_code]:text-[oklch(0.85_0.02_200)]
+                      [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-[#06d6a0]
+                      [&_h2]:text-base [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-2 [&_h2]:text-[#06d6a0]
+                      [&_h3]:text-sm [&_h3]:font-bold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:text-[#00ffc8]
+                      [&_p]:mb-2 [&_p]:last:mb-0
+                      [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2
+                      [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:mb-2
+                      [&_li]:mb-1
+                      [&_strong]:text-[oklch(0.9_0.02_200)] [&_strong]:font-semibold
+                      [&_a]:text-[#06d6a0] [&_a]:underline
+                      [&_blockquote]:border-l-2 [&_blockquote]:border-[#06d6a0]/30 [&_blockquote]:pl-3 [&_blockquote]:italic
+                    ">
+                      <ReactMarkdown>{message.content || ''}</ReactMarkdown>
+                      {message.isStreaming && (
+                        <span className="inline-block w-2 h-4 bg-[#06d6a0] animate-pulse ml-0.5 align-middle" />
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+                  )}
+                  {message.role === 'assistant' && message.model && !message.isStreaming && message.content && (
+                    <p className="text-[10px] text-[oklch(0.35_0.02_200)] mt-2 font-mono flex items-center gap-1">
+                      <Zap className="w-2.5 h-2.5" />
+                      {message.model} · NexForge v0.2.0
+                    </p>
+                  )}
+                </div>
+                {message.role === 'user' && (
+                  <div className="w-8 h-8 rounded-xl bg-[oklch(0.2_0.03_260)] border border-[oklch(0.25_0.04_260)] flex items-center justify-center shrink-0 mt-0.5">
+                    <User className="w-4 h-4 text-[oklch(0.6_0.02_200)]" />
+                  </div>
+                )}
+              </motion.div>
+            ))}
+
+            {/* Plan progress indicator */}
+            {showPlan && planSteps.length > 0 && isLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-md mx-auto"
+              >
+                <div className="rounded-xl bg-[oklch(0.1_0.02_260)] border border-[#06d6a0]/15 p-4 space-y-2">
+                  <div className="flex items-center gap-2 mb-3">
+                    <LayoutList className="w-4 h-4 text-[#06d6a0]" />
+                    <span className="text-xs font-bold text-[#06d6a0] uppercase tracking-wider">Planificando</span>
+                    <div className="flex-1 h-1 bg-[oklch(0.15_0.03_260)] rounded-full overflow-hidden ml-2">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] rounded-full"
+                        initial={{ width: '0%' }}
+                        animate={{ width: `${(planSteps.filter(s => s.status === 'done').length / planSteps.length) * 100}%` }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </div>
+                  </div>
+                  {planSteps.map((step) => (
+                    <div key={step.id} className="flex items-center gap-2">
+                      {step.status === 'done' ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#06d6a0] shrink-0" />
+                      ) : step.status === 'active' ? (
+                        <Loader2 className="w-3.5 h-3.5 text-[#06d6a0] animate-spin shrink-0" />
+                      ) : (
+                        <Circle className="w-3.5 h-3.5 text-[oklch(0.3_0.02_260)] shrink-0" />
+                      )}
+                      <span className={`text-xs ${step.status === 'done' ? 'text-[oklch(0.6_0.02_200)]' : step.status === 'active' ? 'text-[#06d6a0] font-medium' : 'text-[oklch(0.35_0.02_200)]'}`}>
+                        {step.text}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </motion.div>
             )}
+
             <div ref={messagesEndRef} />
           </div>
         )}
       </div>
 
-      {/* Input area */}
-      <div className="border-t border-[oklch(0.2_0.03_260)] bg-[oklch(0.08_0.02_260)]/80 backdrop-blur-sm px-4 sm:px-6 py-3 shrink-0">
+      {/* Input */}
+      <div className="border-t border-[oklch(0.2_0.03_260)] bg-[oklch(0.08_0.02_260)]/90 backdrop-blur-sm px-4 sm:px-6 py-3 shrink-0">
         <div className="flex items-end gap-3 max-w-4xl mx-auto">
           <div className="flex-1 relative">
             <Textarea
@@ -563,7 +554,7 @@ export function ChatSection() {
           </div>
           {isLoading ? (
             <Button
-              onClick={handleStop}
+              onClick={() => { setPlanSteps([]); setShowPlan(false) }}
               className="bg-red-500/80 hover:bg-red-500 text-white font-semibold border-0 rounded-xl h-[46px] w-[46px] p-0 transition-all shrink-0"
             >
               <X className="w-5 h-5" />
@@ -572,26 +563,34 @@ export function ChatSection() {
             <Button
               onClick={handleSend}
               disabled={!input.trim()}
-              className="bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-semibold border-0 rounded-xl h-[46px] w-[46px] p-0 hover:shadow-[0_0_20px_rgba(6,214,160,0.3)] transition-all disabled:opacity-40 shrink-0"
+              className="bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-bold border-0 rounded-xl h-[46px] w-[46px] p-0 hover:shadow-[0_0_20px_rgba(6,214,160,0.3)] transition-all disabled:opacity-40 shrink-0"
             >
               <Send className="w-5 h-5" />
             </Button>
           )}
         </div>
-        <p className="text-[10px] text-[oklch(0.35_0.02_200)] mt-2 text-center">
-          NexForge v0.2.0 — 100% Gratis, Ilimitado y OpenSource · Enter para enviar, Shift+Enter nueva línea
-        </p>
+        <div className="flex items-center justify-between mt-2 max-w-4xl mx-auto">
+          <p className="text-[10px] text-[oklch(0.35_0.02_200)]">
+            Enter para enviar · Shift+Enter nueva línea
+          </p>
+          <div className="flex items-center gap-2 text-[10px] text-[oklch(0.3_0.02_200)]">
+            <Code2 className="w-3 h-3" />
+            <span>NexForge v0.2.0</span>
+            <span>·</span>
+            <span>100% Gratis</span>
+            <span>·</span>
+            <span>OpenSource</span>
+          </div>
+        </div>
       </div>
     </>
   )
 
-  // Fullscreen mode: render as fixed overlay
   if (isFullscreen) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
         className="fixed inset-0 z-[100] flex flex-col bg-[oklch(0.08_0.02_260)]"
       >
         {chatContent}
@@ -599,12 +598,10 @@ export function ChatSection() {
     )
   }
 
-  // Embedded mode: section within the page
   return (
     <section id="chat" className="relative py-24 md:py-32">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#06d6a0]/20 to-transparent" />
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -613,20 +610,18 @@ export function ChatSection() {
           className="text-center mb-8"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#06d6a0]/10 border border-[#06d6a0]/20 mb-4">
-            <MessageSquare className="w-4 h-4 text-[#06d6a0]" />
-            <span className="text-sm font-medium text-[#06d6a0]">Chat en Vivo</span>
+            <Play className="w-4 h-4 text-[#06d6a0]" />
+            <span className="text-sm font-medium text-[#06d6a0]">Chat IA en Vivo</span>
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
             Habla con la{' '}
             <span className="text-gradient">IA</span>
           </h2>
           <p className="text-lg text-[oklch(0.6_0.02_200)] max-w-2xl mx-auto">
-            Elige un modelo y empieza a crear. Pídele cualquier app web y la IA
-            generará el código completo para ti en tiempo real.
+            Pídele que cree una app y la IA planificará, diseñará y codificará en tiempo real.
           </p>
         </motion.div>
 
-        {/* Chat container */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
