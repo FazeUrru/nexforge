@@ -1,7 +1,8 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.4.0-%2306d6a0?style=for-the-badge&labelColor=%230a0f1c" alt="Version">
+  <img src="https://img.shields.io/badge/version-0.5.0-%2306d6a0?style=for-the-badge&labelColor=%230a0f1c" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-%2306d6a0?style=for-the-badge&labelColor=%230a0f1c" alt="License">
   <img src="https://img.shields.io/badge/price-FREE-%2306d6a0?style=for-the-badge&labelColor=%230a0f1c" alt="Free">
+  <img src="https://img.shields.io/badge/AI-4_Agentes-%2300ffc8?style=for-the-badge&labelColor=%230a0f1c" alt="4 AI Agents">
   <img src="https://img.shields.io/badge/AI-Auto--Corrección-%2300ffc8?style=for-the-badge&labelColor=%230a0f1c" alt="Auto-Correction">
 </p>
 
@@ -13,27 +14,37 @@
 
 <p align="center">
   <strong>IA OpenSource para crear aplicaciones web completas</strong><br/>
-  100% Gratis · Ilimitado · Auto-Corrección Integrada · OpenSource para siempre
+  100% Gratis · Ilimitado · 4 Agentes IA · Auto-Corrección · OpenSource para siempre
+</p>
+
+<p align="center">
+  <a href="https://fazeurru.github.io/nexforge/" target="_blank">
+    <img src="https://img.shields.io/badge/🌐_Web_Demo-https://fazeurru.github.io/nexforge/-%2306d6a0?style=flat-square&labelColor=%230a0f1c" alt="Web Demo">
+  </a>
 </p>
 
 ---
 
 ## 🚀 ¿Qué es NexForge?
 
-NexForge es una plataforma web impulsada por Inteligencia Artificial que genera **aplicaciones web completas** a partir de un simple prompt. Incluye planificación arquitectónica, frontend, backend, base de datos, APIs, autenticación y despliegue — todo en un solo flujo de trabajo.
+NexForge es una plataforma web impulsada por Inteligencia Artificial que genera **aplicaciones web completas** a partir de un simple prompt. Incluye planificación arquitectónica, frontend, backend, base de datos, APIs, autenticación y despliegue — todo en un solo flujo de trabajo coordinado por **4 agentes IA especializados** que trabajan en tiempo real.
 
 ### ✨ Características principales
 
+- 🤖 **4 Agentes IA Especializados** — ARQ (Arquitecto), CODE (Programador), QA (Calidad) y UX (Diseño) trabajan coordinados en tiempo real
 - 🧠 **Auto-corrección IA** — La IA detecta y corrige sus propios errores antes de mostrar el resultado
 - 📝 **Editar mensajes** — Edita cualquier mensaje del chat y regenera desde ese punto
 - 📋 **Copiar mensajes** — Copia el contenido de cualquier respuesta al portapapeles
 - 🔊 **Escuchar mensajes** — Text-to-Speech integrado para escuchar las respuestas de la IA
-- ⏱️ **Planificación en tiempo real** — 8 pasos detallados con sub-pasos animados (~64 segundos)
+- 💻 **Vista Previa del Código** — Panel lateral con syntax highlighting, navegación entre archivos generados y visualización en tiempo real
+- 🚀 **Botón Publicar** — Despliega tu app directamente en Vercel con un solo clic
+- 💡 **Sugerencias de Mejora IA** — Después de generar cada app, la IA sugiere 3-5 mejoras específicas
+- ⏱️ **Fases Adaptativas** — La duración de cada fase se adapta automáticamente a la complejidad del proyecto
+- 📊 **Analizador de Complejidad** — Detecta automáticamente si es `simple`, `medium`, `complex` o `enterprise`
 - 📐 **Planificación arquitectónica automática** — La IA diseña la arquitectura completa antes de codificar
 - 💻 **Código production-ready** — TypeScript, React 19, Next.js 16, Tailwind CSS 4, shadcn/ui
 - 🗄️ **Base de datos integrada** — Prisma ORM con migraciones automáticas
 - 🔐 **Autenticación incluida** — NextAuth.js v4 con OAuth providers
-- 🚀 **Despliegue inmediato** — Config para Vercel, Docker, AWS
 - 💯 **100% Gratis e Ilimitado** — Sin planes de pago, sin restricciones
 - 📖 **OpenSource MIT** — Código completamente libre, auditable y modificable
 
@@ -43,18 +54,48 @@ NexForge es una plataforma web impulsada por Inteligencia Artificial que genera 
 
 | Modelo | Versión | Parámetros | Contexto | Velocidad | Especialidad |
 |--------|---------|------------|----------|-----------|-------------|
-| **KODA** | 1.1 | 24B | 256K | 72 tok/s | Full-stack avanzado + auto-corrección |
-| **NOVA** | 0.9 | 14B | 128K | 120 tok/s | Equilibrado + auto-mejora |
-| **FLUX** | 0.7 | 7B | 80K | 220 tok/s | Velocidad extrema + self-check |
+| **KODA** | 1.3 | 28B | 320K | 72 tok/s | Full-stack avanzado + auto-corrección |
+| **NOVA** | 1.1 | 16B | 160K | 135 tok/s | Equilibrado + auto-mejora |
+| **FLUX** | 0.9 | 9B | 96K | 245 tok/s | Velocidad extrema + self-check |
 
-### KODA 1.1 — El motor más potente
-Modelo full-stack avanzado con 24B parámetros y 256K de contexto. Genera aplicaciones completas con planificación arquitectónica, código production-ready, testing y configuración de despliegue. Incluye auto-corrección que detecta y repara errores antes de mostrar el resultado.
+### KODA 1.3 — El motor más potente
+Modelo full-stack avanzado con 28B parámetros y 320K de contexto. Genera aplicaciones completas con planificación arquitectónica, código production-ready, testing y configuración de despliegue. Incluye auto-corrección que detecta y repara errores antes de mostrar el resultado. Ideal para proyectos complejos y enterprise.
 
-### NOVA 0.9 — Brillante y auto-mejorable
-Modelo equilibrado con 14B parámetros y 128K de contexto. Combina inteligencia contextual avanzada con auto-mejora continua. Genera código limpio, bien documentado y con explicaciones paso a paso.
+### NOVA 1.1 — Brillante y auto-mejorable
+Modelo equilibrado con 16B parámetros y 160K de contexto. Combina inteligencia contextual avanzada con auto-mejora continua. Genera código limpio, bien documentado y con explicaciones paso a paso. Perfecto para la mayoría de proyectos con un balance óptimo entre calidad y velocidad.
 
-### FLUX 0.7 — Velocidad pura
-Modelo ultrarrápido con 7B parámetros y 220 tok/s. Genera MVPs completos y prototipos funcionales en segundos. Incluye self-check automático que verifica imports, tipos y lógica.
+### FLUX 0.9 — Velocidad pura
+Modelo ultrarrápido con 9B parámetros y 245 tok/s. Genera MVPs completos y prototipos funcionales en segundos. Incluye self-check automático que verifica imports, tipos y lógica. Ideal para iteraciones rápidas y prototipado.
+
+---
+
+## 👥 Agentes IA Especializados
+
+NexForge cuenta con **4 agentes IA** que trabajan coordinados en tiempo real para crear aplicaciones web completas:
+
+```
+ARQ (Arquitecto)   → Diseña arquitectura, modelos de datos, API
+CODE (Programador)  → Implementa código, componentes, lógica
+QA (Calidad)        → Verifica, testea, auto-corrige errores
+UX (Diseño)         → Optimiza UI/UX, accesibilidad, responsive
+```
+
+Cada agente tiene su propio system prompt especializado y se activa automáticamente según la fase del proyecto. Los badges visuales en el chat indican qué agente está trabajando en cada momento.
+
+---
+
+## ⏱️ Complejidad y Fases Adaptativas
+
+La duración de cada fase se adapta automáticamente a la complejidad del prompt:
+
+| Nivel      | Fases | Duración por Fase | Total Estimado |
+|------------|-------|-------------------|----------------|
+| Simple     | 3-4   | ~12s              | <1 min         |
+| Medium     | 8     | ~30s              | ~4 min         |
+| Complex    | 10    | ~60s              | ~10 min        |
+| Enterprise | 12    | ~90s              | ~18 min        |
+
+El analizador de complejidad detecta automáticamente el nivel del proyecto y ajusta el número y duración de las fases para ofrecer la mejor experiencia posible.
 
 ---
 
@@ -66,6 +107,7 @@ Modelo ultrarrápido con 7B parámetros y 220 tok/s. Genera MVPs completos y pro
 - **ORM**: Prisma (SQLite/PostgreSQL)
 - **Animaciones**: Framer Motion 12
 - **Markdown**: react-markdown 10
+- **Syntax Highlighting**: react-syntax-highlighter (One Dark)
 - **Iconos**: Lucide React
 
 ---
@@ -96,9 +138,11 @@ La aplicación estará disponible en `http://localhost:3000`
 1. **Abre el Chat** — Haz clic en "Chat IA" o desplázate hasta la sección de chat
 2. **Elige un modelo** — Selecciona KODA, NOVA o FLUX según tu necesidad
 3. **Describe tu app** — Escribe lo que quieres crear ("Crea una app de e-commerce con carrito")
-4. **Observa la planificación** — La IA planificará cada paso en tiempo real
-5. **Revisa el código** — La IA genera código completo y se auto-corrige si detecta errores
-6. **Edita y regenera** — Usa los botones de editar, copiar o escuchar para interactuar
+4. **Observa la planificación** — Los 4 agentes IA planificarán cada paso en tiempo real
+5. **Revisa el código** — Usa el panel de vista previa con syntax highlighting para navegar entre archivos
+6. **Publica tu app** — Haz clic en "Publicar" para desplegar en Vercel con un solo clic
+7. **Mejora con IA** — Revisa las sugerencias de mejora y aplica las que necesites
+8. **Edita y regenera** — Usa los botones de editar, copiar o escuchar para interactuar
 
 ---
 
@@ -107,14 +151,32 @@ La aplicación estará disponible en `http://localhost:3000`
 | Comando | Descripción |
 |---------|-------------|
 | `bun run dev` | Servidor de desarrollo (puerto 3000) |
+| `bun run dev:stable` | Servidor de desarrollo con auto-restart |
 | `bun run build` | Build de producción |
 | `bun run start` | Servidor de producción |
+| `bun run start:stable` | Servidor de producción con auto-restart |
+| `bun run health` | Health-check del servidor |
 | `bun run db:push` | Sincronizar esquema Prisma |
 | `bun run db:generate` | Generar cliente Prisma |
+| `bun run db:migrate` | Ejecutar migraciones |
+| `bun run db:reset` | Resetear base de datos |
 
 ---
 
 ## 📋 Changelog
+
+### v0.5.0 (Mayo 2026)
+- ✅ 4 Agentes IA Especializados: ARQ, CODE, QA y UX en tiempo real
+- ✅ Vista Previa del Código con syntax highlighting y navegación entre archivos
+- ✅ Botón Publicar: despliegue en Vercel con un clic
+- ✅ Sugerencias de Mejora IA: 3-5 mejoras específicas por app
+- ✅ Fases Adaptativas por Complejidad: simple/medium/complex/enterprise
+- ✅ Analizador de Complejidad automático
+- ✅ Auto-estabilidad del servidor con health-check y auto-restart
+- ✅ KODA 1.3 (28B, 320K) · NOVA 1.1 (16B, 160K) · FLUX 0.9 (9B, 96K)
+- ✅ Contador de tiempo transcurrido durante generación
+- ✅ Badges visuales de agentes activos
+- ✅ 8 prompts sugeridos en el chat
 
 ### v0.4.0 (Mayo 2026)
 - ✅ Auto-corrección IA integrada — detecta y corrige errores automáticamente
@@ -157,5 +219,5 @@ Este proyecto está bajo la **Licencia MIT** — consulta el archivo [LICENSE](L
 
 <p align="center">
   Hecho con 🤖 IA y ❤️ amor OpenSource<br/>
-  <strong>NexForge v0.4.0</strong> · <a href="https://github.com/FazeUrru/nexforge">GitHub</a>
+  <strong>NexForge v0.5.0</strong> · <a href="https://fazeurru.github.io/nexforge/">Web</a> · <a href="https://github.com/FazeUrru/nexforge">GitHub</a>
 </p>
