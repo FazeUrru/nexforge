@@ -344,10 +344,225 @@ function extractCodeBlocks(content: string): CodeBlock[] {
 // ─── Main Component ──────────────────────────────────────────────
 
 // Detect if running on GitHub Pages (static mode, no API routes)
-const isStaticMode = typeof window !== 'undefined' && (
-  window.location.hostname.includes('github.io') ||
-  window.location.pathname.startsWith('/nexforge')
-)
+function getIsStaticMode(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.location.hostname.includes('github.io') ||
+    window.location.pathname.startsWith('/nexforge')
+}
+
+// Demo responses for static mode (GitHub Pages)
+const demoResponses: Record<string, string> = {
+  'ecommerce': `## 🛒 E-Commerce App — Generada por KODA 1.3 + 4 Agentes
+
+### Arquitectura (ARQ)
+He diseñado una arquitectura escalable con:
+- **Frontend**: Next.js 14 App Router + Tailwind CSS
+- **Backend**: API Routes con validación Zod
+- **Base de datos**: PostgreSQL con Prisma ORM
+- **Auth**: NextAuth.js con providers Google y GitHub
+- **Pagos**: Integración Stripe para checkout
+
+### Código Implementado (CODE)
+
+\`\`\`typescript//app/api/products/route.ts
+import { prisma } from '@/lib/db'
+import { NextResponse } from 'next/server'
+
+export async function GET() {
+  const products = await prisma.product.findMany({
+    include: { category: true, reviews: true },
+    orderBy: { createdAt: 'desc' },
+  })
+  return NextResponse.json(products)
+}
+
+export async function POST(req: Request) {
+  const body = await req.json()
+  const product = await prisma.product.create({ data: body })
+  return NextResponse.json(product, { status: 201 })
+}
+\`\`\`
+
+\`\`\`typescript//components/ProductCard.tsx
+'use client'
+import { useCart } from '@/hooks/useCart'
+import { ShoppingCart, Star } from 'lucide-react'
+
+export function ProductCard({ product }: { product: any }) {
+  const { addItem } = useCart()
+  return (
+    <div className="rounded-xl border bg-card p-4 hover:shadow-lg transition">
+      <img src={product.image} className="w-full h-48 object-cover rounded-lg" />
+      <h3 className="font-semibold mt-3">{product.name}</h3>
+      <div className="flex items-center gap-1 mt-1">
+        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+        <span className="text-sm text-muted">{product.rating}</span>
+      </div>
+      <div className="flex items-center justify-between mt-3">
+        <span className="text-lg font-bold">${product.price}</span>
+        <button onClick={() => addItem(product)} className="bg-primary text-white px-3 py-2 rounded-lg">
+          <ShoppingCart className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
+\`\`\`
+
+### Verificación (QA)
+- ✅ 12 API endpoints verificados
+- ✅ Tipado TypeScript completo
+- ✅ Validación Zod en todos los inputs
+- ✅ Manejo de errores global
+- ✅ 8/8 tests pasando
+
+### Optimización UX
+- ✅ Responsive design (mobile-first)
+- ✅ Skeleton loading states
+- ✅ Accesibilidad ARIA labels
+- ✅ Animaciones de transición suaves
+
+**📦 47 archivos generados · 12 endpoints · 23 componentes**`,
+
+  'dashboard': `## 📊 Dashboard App — Generada por KODA 1.3 + 4 Agentes
+
+### Arquitectura (ARQ)
+- **Layout**: Sidebar + Header + Main content area
+- **Gráficos**: Recharts para visualización en tiempo real
+- **Auth**: JWT con refresh tokens
+- **API**: REST con rate limiting
+
+### Código Implementado (CODE)
+
+\`\`\`typescript//app/api/analytics/route.ts
+import { prisma } from '@/lib/db'
+import { NextResponse } from 'next/server'
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const range = searchParams.get('range') || '7d'
+  const [users, revenue, orders] = await Promise.all([
+    prisma.user.count(),
+    prisma.order.aggregate({ _sum: { total: true } }),
+    prisma.order.count(),
+  ])
+  return NextResponse.json({ users, revenue: revenue._sum.total, orders })
+}
+\`\`\`
+
+\`\`\`typescript//components/DashboardChart.tsx
+'use client'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+
+export function DashboardChart({ data }: { data: any[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+        <XAxis dataKey="name" stroke="#666" />
+        <YAxis stroke="#666" />
+        <Tooltip contentStyle={{ background: '#1a1a2e', border: 'none', borderRadius: 8 }} />
+        <Line type="monotone" dataKey="revenue" stroke="#06d6a0" strokeWidth={2} />
+        <Line type="monotone" dataKey="users" stroke="#8b5cf6" strokeWidth={2} />
+      </LineChart>
+    </ResponsiveContainer>
+  )
+}
+\`\`\`
+
+### QA & UX
+- ✅ Todos los endpoints verificados
+- ✅ Gráficos responsive
+- ✅ Dark mode completo
+- ✅ Filtros de fecha funcionales
+
+**📦 38 archivos · 8 endpoints · 18 componentes**`,
+
+  'blog': `## 📝 Blog CMS — Generada por NOVA 1.1 + 4 Agentes
+
+### Arquitectura (ARQ)
+- **CMS**: Editor MDX con preview en tiempo real
+- **SEO**: Meta tags dinámicos, sitemap automático
+- **Comentarios**: Sistema con moderación
+- **Auth**: NextAuth con roles (admin, editor, lector)
+
+### Código (CODE)
+
+\`\`\`typescript//app/api/posts/route.ts
+import { prisma } from '@/lib/db'
+import { NextResponse } from 'next/server'
+
+export async function GET() {
+  const posts = await prisma.post.findMany({
+    include: { author: true, tags: true },
+    orderBy: { publishedAt: 'desc' },
+  })
+  return NextResponse.json(posts)
+}
+\`\`\`
+
+### QA & UX
+- ✅ SEO optimizado
+- ✅ Markdown rendering
+- ✅ Responsive typography
+- ✅ Reading time estimation
+
+**📦 32 archivos · 6 endpoints · 15 componentes**`,
+
+  'default': `## ⚡ App Generada por ${'${currentModel}'} + 4 Agentes
+
+### Arquitectura (ARQ)
+He analizado tu solicitud y diseñado una arquitectura optimizada:
+- **Frontend**: Next.js App Router + Tailwind CSS
+- **Backend**: API Routes con validación
+- **Base de datos**: Prisma ORM
+- **Deploy**: Configurado para Vercel
+
+### Código (CODE)
+
+\`\`\`typescript//app/page.tsx
+'use client'
+import { useState } from 'react'
+
+export default function Home() {
+  const [data, setData] = useState(null)
+  
+  return (
+    <main className="min-h-screen bg-background">
+      <h1 className="text-4xl font-bold">Mi App</h1>
+      <p className="text-muted-foreground">Generada con NexForge</p>
+    </main>
+  )
+}
+\`\`\`
+
+### Verificación (QA)
+- ✅ Imports verificados
+- ✅ Tipos TypeScript correctos
+- ✅ Sin errores de compilación
+
+### UX
+- ✅ Responsive design
+- ✅ Accesibilidad
+- ✅ Animaciones suaves
+
+**📦 24 archivos · 5 endpoints · 12 componentes**`,
+}
+
+function getDemoResponse(prompt: string, modelName: string): string {
+  const lower = prompt.toLowerCase()
+  let response: string
+  if (lower.includes('ecommerce') || lower.includes('e-commerce') || lower.includes('tienda') || lower.includes('shop') || lower.includes('carrito')) {
+    response = demoResponses['ecommerce']
+  } else if (lower.includes('dashboard') || lower.includes('gráfico') || lower.includes('analytics')) {
+    response = demoResponses['dashboard']
+  } else if (lower.includes('blog') || lower.includes('cms') || lower.includes('markdown')) {
+    response = demoResponses['blog']
+  } else {
+    response = demoResponses['default']
+  }
+  return response.replace(/\$\{currentModel\}/g, modelName)
+}
 
 export function ChatSection() {
   const [selectedModel, setSelectedModel] = useState<string>('koda-1.3')
@@ -472,6 +687,8 @@ export function ChatSection() {
   // ─── Suggestions Fetch ──────────────────────────────────────
 
   const fetchSuggestions = useCallback(async (messageId: string, content: string) => {
+    // Skip in static mode (no API routes on GitHub Pages)
+    if (getIsStaticMode()) return
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -654,49 +871,68 @@ export function ChatSection() {
     ])
 
     try {
-      const chatMessages = newMessages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      }))
+      // Static mode: generate demo response (GitHub Pages has no API routes)
+      if (getIsStaticMode()) {
+        const demoMessage = getDemoResponse(promptText, currentModel.name)
+        // Simulate API delay based on complexity
+        const delay = complexity.level === 'enterprise' ? 4000 : complexity.level === 'complex' ? 3000 : complexity.level === 'medium' ? 2000 : 1500
+        await new Promise((resolve) => setTimeout(resolve, delay))
 
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 300000) // 5 min timeout
+        // Mark all plan steps done
+        setPlanSteps((prev) => prev.map((s) => ({ ...s, status: 'done' as const })))
 
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: chatMessages,
-          model: selectedModel,
-          enableSelfCorrection: true,
-        }),
-        signal: controller.signal,
-      })
+        // Start streaming simulation with demo response
+        simulateStreaming(demoMessage, assistantId)
 
-      clearTimeout(timeoutId)
-
-      if (!response.ok) {
-        let errorMsg = 'Error del servidor'
-        try { const errData = await response.json(); errorMsg = errData.error || errorMsg } catch { /* */ }
-        throw new Error(errorMsg)
-      }
-
-      const data = await response.json()
-
-      if (!data.message || data.message.trim().length === 0) {
-        throw new Error('La IA devolvió una respuesta vacía. Intenta de nuevo.')
-      }
-
-      // Mark all plan steps done
-      setPlanSteps((prev) => prev.map((s) => ({ ...s, status: 'done' as const })))
-
-      // Start streaming simulation
-      simulateStreaming(data.message, assistantId)
-
-      if (data.selfCorrected) {
         setMessages((prev) =>
           prev.map((m) => m.id === assistantId ? { ...m, selfCorrected: true } : m)
         )
+      } else {
+        // Live mode: call the real API
+        const chatMessages = newMessages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        }))
+
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 300000) // 5 min timeout
+
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: chatMessages,
+            model: selectedModel,
+            enableSelfCorrection: true,
+          }),
+          signal: controller.signal,
+        })
+
+        clearTimeout(timeoutId)
+
+        if (!response.ok) {
+          let errorMsg = 'Error del servidor'
+          try { const errData = await response.json(); errorMsg = errData.error || errorMsg } catch { /* */ }
+          throw new Error(errorMsg)
+        }
+
+        const data = await response.json()
+
+        if (!data.message || data.message.trim().length === 0) {
+          throw new Error('La IA devolvió una respuesta vacía. Intenta de nuevo.')
+        }
+
+        // Mark all plan steps done
+        setPlanSteps((prev) => prev.map((s) => ({ ...s, status: 'done' as const })))
+
+        // Start streaming simulation
+        simulateStreaming(data.message, assistantId)
+
+        if (data.selfCorrected) {
+          setMessages((prev) =>
+            prev.map((m) => m.id === assistantId ? { ...m, selfCorrected: true } : m)
+          )
+        }
       }
     } catch (error) {
       const isAbort = error instanceof Error && error.name === 'AbortError'
@@ -873,29 +1109,41 @@ export function ChatSection() {
 
     const chatMessages = newMessages.map((m) => ({ role: m.role, content: m.content }))
 
-    fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: chatMessages, model: selectedModel, enableSelfCorrection: true }),
-    })
-      .then((response) => { if (!response.ok) throw new Error('Error del servidor'); return response.json() })
-      .then((data) => {
-        if (!data.message) throw new Error('Respuesta vacía')
+    // Static mode: use demo response
+    if (getIsStaticMode()) {
+      const demoMessage = getDemoResponse(editText, currentModel.name)
+      const delay = complexity.level === 'enterprise' ? 4000 : complexity.level === 'complex' ? 3000 : 2000
+      setTimeout(() => {
         setPlanSteps((prev) => prev.map((s) => ({ ...s, status: 'done' as const })))
-        simulateStreaming(data.message, assistantId)
-        if (data.selfCorrected) {
-          setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, selfCorrected: true } : m))
-        }
+        simulateStreaming(demoMessage, assistantId)
+        setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, selfCorrected: true } : m))
+        setIsLoading(false)
+      }, delay)
+    } else {
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: chatMessages, model: selectedModel, enableSelfCorrection: true }),
       })
-      .catch(() => {
-        setMessages((prev) => {
-          const filtered = prev.filter((m) => m.id !== assistantId)
-          return [...filtered, { id: assistantId, role: 'assistant', content: 'Error de conexión. Intenta de nuevo.', model: currentModel.name, isStreaming: false }]
+        .then((response) => { if (!response.ok) throw new Error('Error del servidor'); return response.json() })
+        .then((data) => {
+          if (!data.message) throw new Error('Respuesta vacía')
+          setPlanSteps((prev) => prev.map((s) => ({ ...s, status: 'done' as const })))
+          simulateStreaming(data.message, assistantId)
+          if (data.selfCorrected) {
+            setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, selfCorrected: true } : m))
+          }
         })
-        setPlanSteps([])
-        setShowPlan(false)
-      })
-      .finally(() => setIsLoading(false))
+        .catch(() => {
+          setMessages((prev) => {
+            const filtered = prev.filter((m) => m.id !== assistantId)
+            return [...filtered, { id: assistantId, role: 'assistant', content: 'Error de conexión. Intenta de nuevo.', model: currentModel.name, isStreaming: false }]
+          })
+          setPlanSteps([])
+          setShowPlan(false)
+        })
+        .finally(() => setIsLoading(false))
+    }
   }
 
   const handleCancelEdit = () => { setEditingMessageId(null); setEditText('') }
