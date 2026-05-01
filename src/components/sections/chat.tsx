@@ -1220,9 +1220,9 @@ export function ChatSection() {
             </AnimatePresence>
           </div>
           <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#06d6a0]/5 border border-[#06d6a0]/10">
-            <div className={`w-1.5 h-1.5 rounded-full ${isStaticMode ? 'bg-[#f59e0b]' : 'bg-[#06d6a0] animate-pulse'}`} />
-            <span className={`text-[10px] font-medium ${isStaticMode ? 'text-[#f59e0b]' : 'text-[#06d6a0]'}`}>
-              {isStaticMode ? 'Modo Demo · Sin servidor' : '4 Agentes · Auto-Corrección'}
+            <div className={`w-1.5 h-1.5 rounded-full ${getIsStaticMode() ? 'bg-[#f59e0b]' : 'bg-[#06d6a0] animate-pulse'}`} />
+            <span className={`text-[10px] font-medium ${getIsStaticMode() ? 'text-[#f59e0b]' : 'text-[#06d6a0]'}`}>
+              {getIsStaticMode() ? 'Modo Demo · Sin servidor' : '4 Agentes · Auto-Corrección'}
             </span>
           </div>
           {complexityInfo && isLoading && (
@@ -1268,7 +1268,7 @@ export function ChatSection() {
         <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 scroll-smooth ${isFullscreen ? '' : 'h-[480px] sm:h-[540px]'}`}>
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-4">
-              {isStaticMode && (
+              {getIsStaticMode() && (
                 <div className="mb-6 px-4 py-3 rounded-xl bg-[#f59e0b]/10 border border-[#f59e0b]/20 max-w-md">
                   <p className="text-xs text-[#f59e0b] font-medium mb-1">Modo Demostración</p>
                   <p className="text-[11px] text-[oklch(0.5_0.02_200)]">
