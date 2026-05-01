@@ -351,217 +351,178 @@ function getIsStaticMode(): boolean {
 }
 
 // Demo responses for static mode (GitHub Pages)
-const demoResponses: Record<string, string> = {
-  'ecommerce': `## 🛒 E-Commerce App — Generada por KODA 1.3 + 4 Agentes
+// Using regular strings to avoid template literal interpolation issues with JSX code containing ${}
+const demoEcommerce = '## 🛒 E-Commerce App — Generada por KODA 1.3 + 4 Agentes\n\n' +
+'### Arquitectura (ARQ)\n' +
+'He diseñado una arquitectura escalable con:\n' +
+'- **Frontend**: Next.js 14 App Router + Tailwind CSS\n' +
+'- **Backend**: API Routes con validación Zod\n' +
+'- **Base de datos**: PostgreSQL con Prisma ORM\n' +
+'- **Auth**: NextAuth.js con providers Google y GitHub\n' +
+'- **Pagos**: Integración Stripe para checkout\n\n' +
+'### Código Implementado (CODE)\n\n' +
+'```typescript//app/api/products/route.ts\n' +
+"import { prisma } from '@/lib/db'\n" +
+"import { NextResponse } from 'next/server'\n\n" +
+'export async function GET() {\n' +
+'  const products = await prisma.product.findMany({\n' +
+'    include: { category: true, reviews: true },\n' +
+"    orderBy: { createdAt: 'desc' },\n" +
+'  })\n' +
+'  return NextResponse.json(products)\n' +
+'}\n\n' +
+'export async function POST(req: Request) {\n' +
+'  const body = await req.json()\n' +
+'  const product = await prisma.product.create({ data: body })\n' +
+'  return NextResponse.json(product, { status: 201 })\n' +
+'}\n```\n\n' +
+'```typescript//components/ProductCard.tsx\n' +
+"'use client'\n" +
+"import { useCart } from '@/hooks/useCart'\n" +
+"import { ShoppingCart, Star } from 'lucide-react'\n\n" +
+'export function ProductCard({ product }: { product: any }) {\n' +
+'  const { addItem } = useCart()\n' +
+'  return (\n' +
+'    <div className="rounded-xl border bg-card p-4 hover:shadow-lg transition">\n' +
+'      <h3 className="font-semibold mt-3">{product.name}</h3>\n' +
+'      <div className="flex items-center gap-1 mt-1">\n' +
+'        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />\n' +
+'        <span className="text-sm text-muted">{product.rating}</span>\n' +
+'      </div>\n' +
+'      <div className="flex items-center justify-between mt-3">\n' +
+'        <span className="text-lg font-bold">Precio</span>\n' +
+'        <button className="bg-primary text-white px-3 py-2 rounded-lg">\n' +
+'          <ShoppingCart className="w-4 h-4" />\n' +
+'        </button>\n' +
+'      </div>\n' +
+'    </div>\n' +
+'  )\n' +
+'}\n```\n\n' +
+'### Verificación (QA)\n' +
+'- ✅ 12 API endpoints verificados\n' +
+'- ✅ Tipado TypeScript completo\n' +
+'- ✅ Validación Zod en todos los inputs\n' +
+'- ✅ Manejo de errores global\n' +
+'- ✅ 8/8 tests pasando\n\n' +
+'### Optimización UX\n' +
+'- ✅ Responsive design (mobile-first)\n' +
+'- ✅ Skeleton loading states\n' +
+'- ✅ Accesibilidad ARIA labels\n' +
+'- ✅ Animaciones de transición suaves\n\n' +
+'**📦 47 archivos generados · 12 endpoints · 23 componentes**'
 
-### Arquitectura (ARQ)
-He diseñado una arquitectura escalable con:
-- **Frontend**: Next.js 14 App Router + Tailwind CSS
-- **Backend**: API Routes con validación Zod
-- **Base de datos**: PostgreSQL con Prisma ORM
-- **Auth**: NextAuth.js con providers Google y GitHub
-- **Pagos**: Integración Stripe para checkout
+const demoDashboard = '## 📊 Dashboard App — Generada por KODA 1.3 + 4 Agentes\n\n' +
+'### Arquitectura (ARQ)\n' +
+'- **Layout**: Sidebar + Header + Main content area\n' +
+'- **Gráficos**: Recharts para visualización en tiempo real\n' +
+'- **Auth**: JWT con refresh tokens\n' +
+'- **API**: REST con rate limiting\n\n' +
+'### Código Implementado (CODE)\n\n' +
+'```typescript//app/api/analytics/route.ts\n' +
+"import { prisma } from '@/lib/db'\n" +
+"import { NextResponse } from 'next/server'\n\n" +
+'export async function GET(req: Request) {\n' +
+'  const { searchParams } = new URL(req.url)\n' +
+"  const range = searchParams.get('range') || '7d'\n" +
+'  const [users, revenue, orders] = await Promise.all([\n' +
+'    prisma.user.count(),\n' +
+'    prisma.order.aggregate({ _sum: { total: true } }),\n' +
+'    prisma.order.count(),\n' +
+'  ])\n' +
+'  return NextResponse.json({ users, revenue: revenue._sum.total, orders })\n' +
+'}\n```\n\n' +
+'```typescript//components/DashboardChart.tsx\n' +
+"'use client'\n" +
+"import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'\n\n" +
+'export function DashboardChart({ data }: { data: any[] }) {\n' +
+'  return (\n' +
+'    <ResponsiveContainer width="100%" height={300}>\n' +
+'      <LineChart data={data}>\n' +
+'        <CartesianGrid strokeDasharray="3 3" stroke="#333" />\n' +
+'        <XAxis dataKey="name" stroke="#666" />\n' +
+'        <YAxis stroke="#666" />\n' +
+"        <Tooltip contentStyle={{ background: '#1a1a2e', border: 'none', borderRadius: 8 }} />\n" +
+'        <Line type="monotone" dataKey="revenue" stroke="#06d6a0" strokeWidth={2} />\n' +
+'        <Line type="monotone" dataKey="users" stroke="#8b5cf6" strokeWidth={2} />\n' +
+'      </LineChart>\n' +
+'    </ResponsiveContainer>\n' +
+'  )\n' +
+'}\n```\n\n' +
+'### QA & UX\n' +
+'- ✅ Todos los endpoints verificados\n' +
+'- ✅ Gráficos responsive\n' +
+'- ✅ Dark mode completo\n' +
+'- ✅ Filtros de fecha funcionales\n\n' +
+'**📦 38 archivos · 8 endpoints · 18 componentes**'
 
-### Código Implementado (CODE)
+const demoBlog = '## 📝 Blog CMS — Generada por NOVA 1.1 + 4 Agentes\n\n' +
+'### Arquitectura (ARQ)\n' +
+'- **CMS**: Editor MDX con preview en tiempo real\n' +
+'- **SEO**: Meta tags dinámicos, sitemap automático\n' +
+'- **Comentarios**: Sistema con moderación\n' +
+'- **Auth**: NextAuth con roles (admin, editor, lector)\n\n' +
+'### Código (CODE)\n\n' +
+'```typescript//app/api/posts/route.ts\n' +
+"import { prisma } from '@/lib/db'\n" +
+"import { NextResponse } from 'next/server'\n\n" +
+'export async function GET() {\n' +
+'  const posts = await prisma.post.findMany({\n' +
+'    include: { author: true, tags: true },\n' +
+"    orderBy: { publishedAt: 'desc' },\n" +
+'  })\n' +
+'  return NextResponse.json(posts)\n' +
+'}\n```\n\n' +
+'### QA & UX\n' +
+'- ✅ SEO optimizado\n' +
+'- ✅ Markdown rendering\n' +
+'- ✅ Responsive typography\n' +
+'- ✅ Reading time estimation\n\n' +
+'**📦 32 archivos · 6 endpoints · 15 componentes**'
 
-\`\`\`typescript//app/api/products/route.ts
-import { prisma } from '@/lib/db'
-import { NextResponse } from 'next/server'
-
-export async function GET() {
-  const products = await prisma.product.findMany({
-    include: { category: true, reviews: true },
-    orderBy: { createdAt: 'desc' },
-  })
-  return NextResponse.json(products)
-}
-
-export async function POST(req: Request) {
-  const body = await req.json()
-  const product = await prisma.product.create({ data: body })
-  return NextResponse.json(product, { status: 201 })
-}
-\`\`\`
-
-\`\`\`typescript//components/ProductCard.tsx
-'use client'
-import { useCart } from '@/hooks/useCart'
-import { ShoppingCart, Star } from 'lucide-react'
-
-export function ProductCard({ product }: { product: any }) {
-  const { addItem } = useCart()
-  return (
-    <div className="rounded-xl border bg-card p-4 hover:shadow-lg transition">
-      <img src={product.image} className="w-full h-48 object-cover rounded-lg" />
-      <h3 className="font-semibold mt-3">{product.name}</h3>
-      <div className="flex items-center gap-1 mt-1">
-        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-        <span className="text-sm text-muted">{product.rating}</span>
-      </div>
-      <div className="flex items-center justify-between mt-3">
-        <span className="text-lg font-bold">${product.price}</span>
-        <button onClick={() => addItem(product)} className="bg-primary text-white px-3 py-2 rounded-lg">
-          <ShoppingCart className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  )
-}
-\`\`\`
-
-### Verificación (QA)
-- ✅ 12 API endpoints verificados
-- ✅ Tipado TypeScript completo
-- ✅ Validación Zod en todos los inputs
-- ✅ Manejo de errores global
-- ✅ 8/8 tests pasando
-
-### Optimización UX
-- ✅ Responsive design (mobile-first)
-- ✅ Skeleton loading states
-- ✅ Accesibilidad ARIA labels
-- ✅ Animaciones de transición suaves
-
-**📦 47 archivos generados · 12 endpoints · 23 componentes**`,
-
-  'dashboard': `## 📊 Dashboard App — Generada por KODA 1.3 + 4 Agentes
-
-### Arquitectura (ARQ)
-- **Layout**: Sidebar + Header + Main content area
-- **Gráficos**: Recharts para visualización en tiempo real
-- **Auth**: JWT con refresh tokens
-- **API**: REST con rate limiting
-
-### Código Implementado (CODE)
-
-\`\`\`typescript//app/api/analytics/route.ts
-import { prisma } from '@/lib/db'
-import { NextResponse } from 'next/server'
-
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
-  const range = searchParams.get('range') || '7d'
-  const [users, revenue, orders] = await Promise.all([
-    prisma.user.count(),
-    prisma.order.aggregate({ _sum: { total: true } }),
-    prisma.order.count(),
-  ])
-  return NextResponse.json({ users, revenue: revenue._sum.total, orders })
-}
-\`\`\`
-
-\`\`\`typescript//components/DashboardChart.tsx
-'use client'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-
-export function DashboardChart({ data }: { data: any[] }) {
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-        <XAxis dataKey="name" stroke="#666" />
-        <YAxis stroke="#666" />
-        <Tooltip contentStyle={{ background: '#1a1a2e', border: 'none', borderRadius: 8 }} />
-        <Line type="monotone" dataKey="revenue" stroke="#06d6a0" strokeWidth={2} />
-        <Line type="monotone" dataKey="users" stroke="#8b5cf6" strokeWidth={2} />
-      </LineChart>
-    </ResponsiveContainer>
-  )
-}
-\`\`\`
-
-### QA & UX
-- ✅ Todos los endpoints verificados
-- ✅ Gráficos responsive
-- ✅ Dark mode completo
-- ✅ Filtros de fecha funcionales
-
-**📦 38 archivos · 8 endpoints · 18 componentes**`,
-
-  'blog': `## 📝 Blog CMS — Generada por NOVA 1.1 + 4 Agentes
-
-### Arquitectura (ARQ)
-- **CMS**: Editor MDX con preview en tiempo real
-- **SEO**: Meta tags dinámicos, sitemap automático
-- **Comentarios**: Sistema con moderación
-- **Auth**: NextAuth con roles (admin, editor, lector)
-
-### Código (CODE)
-
-\`\`\`typescript//app/api/posts/route.ts
-import { prisma } from '@/lib/db'
-import { NextResponse } from 'next/server'
-
-export async function GET() {
-  const posts = await prisma.post.findMany({
-    include: { author: true, tags: true },
-    orderBy: { publishedAt: 'desc' },
-  })
-  return NextResponse.json(posts)
-}
-\`\`\`
-
-### QA & UX
-- ✅ SEO optimizado
-- ✅ Markdown rendering
-- ✅ Responsive typography
-- ✅ Reading time estimation
-
-**📦 32 archivos · 6 endpoints · 15 componentes**`,
-
-  'default': `## ⚡ App Generada por ${'${currentModel}'} + 4 Agentes
-
-### Arquitectura (ARQ)
-He analizado tu solicitud y diseñado una arquitectura optimizada:
-- **Frontend**: Next.js App Router + Tailwind CSS
-- **Backend**: API Routes con validación
-- **Base de datos**: Prisma ORM
-- **Deploy**: Configurado para Vercel
-
-### Código (CODE)
-
-\`\`\`typescript//app/page.tsx
-'use client'
-import { useState } from 'react'
-
-export default function Home() {
-  const [data, setData] = useState(null)
-  
-  return (
-    <main className="min-h-screen bg-background">
-      <h1 className="text-4xl font-bold">Mi App</h1>
-      <p className="text-muted-foreground">Generada con NexForge</p>
-    </main>
-  )
-}
-\`\`\`
-
-### Verificación (QA)
-- ✅ Imports verificados
-- ✅ Tipos TypeScript correctos
-- ✅ Sin errores de compilación
-
-### UX
-- ✅ Responsive design
-- ✅ Accesibilidad
-- ✅ Animaciones suaves
-
-**📦 24 archivos · 5 endpoints · 12 componentes**`,
-}
+const demoDefault = '## ⚡ App Generada por MODEL_NAME + 4 Agentes\n\n' +
+'### Arquitectura (ARQ)\n' +
+'He analizado tu solicitud y diseñado una arquitectura optimizada:\n' +
+'- **Frontend**: Next.js App Router + Tailwind CSS\n' +
+'- **Backend**: API Routes con validación\n' +
+'- **Base de datos**: Prisma ORM\n' +
+'- **Deploy**: Configurado para Vercel\n\n' +
+'### Código (CODE)\n\n' +
+'```typescript//app/page.tsx\n' +
+"'use client'\n" +
+"import { useState } from 'react'\n\n" +
+'export default function Home() {\n' +
+'  const [data, setData] = useState(null)\n' +
+'  \n' +
+'  return (\n' +
+'    <main className="min-h-screen bg-background">\n' +
+'      <h1 className="text-4xl font-bold">Mi App</h1>\n' +
+'      <p className="text-muted-foreground">Generada con NexForge</p>\n' +
+'    </main>\n' +
+'  )\n' +
+'}\n```\n\n' +
+'### Verificación (QA)\n' +
+'- ✅ Imports verificados\n' +
+'- ✅ Tipos TypeScript correctos\n' +
+'- ✅ Sin errores de compilación\n\n' +
+'### UX\n' +
+'- ✅ Responsive design\n' +
+'- ✅ Accesibilidad\n' +
+'- ✅ Animaciones suaves\n\n' +
+'**📦 24 archivos · 5 endpoints · 12 componentes**'
 
 function getDemoResponse(prompt: string, modelName: string): string {
   const lower = prompt.toLowerCase()
   let response: string
   if (lower.includes('ecommerce') || lower.includes('e-commerce') || lower.includes('tienda') || lower.includes('shop') || lower.includes('carrito')) {
-    response = demoResponses['ecommerce']
+    response = demoEcommerce
   } else if (lower.includes('dashboard') || lower.includes('gráfico') || lower.includes('analytics')) {
-    response = demoResponses['dashboard']
+    response = demoDashboard
   } else if (lower.includes('blog') || lower.includes('cms') || lower.includes('markdown')) {
-    response = demoResponses['blog']
+    response = demoBlog
   } else {
-    response = demoResponses['default']
+    response = demoDefault
   }
-  return response.replace(/\$\{currentModel\}/g, modelName)
+  return response.replace(/MODEL_NAME/g, modelName)
 }
 
 export function ChatSection() {
