@@ -34,7 +34,7 @@ export function Hero() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#06d6a0]/10 border border-[#06d6a0]/20 mb-8"
         >
           <Sparkles className="w-4 h-4 text-[#06d6a0]" />
-          <span className="text-sm font-medium text-[#06d6a0]">v0.3.0 — OpenSource & 100% Gratis</span>
+          <span className="text-sm font-medium text-[#06d6a0]">v0.4.0 — Auto-Corrección · OpenSource · 100% Gratis</span>
         </motion.div>
 
         {/* Main headline */}
@@ -57,11 +57,11 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-lg sm:text-xl text-[oklch(0.6_0.02_200)] max-w-2xl mx-auto mb-10 leading-relaxed"
         >
-          Tres modelos de IA potentes. Sin restricciones de uso. Sin límites.
+          Tres modelos de IA potentes con auto-corrección. Sin restricciones de uso. Sin límites.
           Sin costes. OpenSource para siempre. Genera aplicaciones web completas
-          en segundos con <strong className="text-[#06d6a0]">KODA 0.9</strong>,{' '}
-          <strong className="text-[#00ffc8]">NOVA 0.7</strong> y{' '}
-          <strong className="text-[#10b981]">FLUX 0.5</strong>.
+          en segundos con <strong className="text-[#06d6a0]">KODA 1.1</strong>,{' '}
+          <strong className="text-[#00ffc8]">NOVA 0.9</strong> y{' '}
+          <strong className="text-[#10b981]">FLUX 0.7</strong>.
         </motion.p>
 
         {/* CTA Buttons */}
