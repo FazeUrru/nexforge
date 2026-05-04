@@ -47,7 +47,7 @@ export function Navbar() {
               Nex<span className="text-gradient">Forge</span>
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#06d6a0]/10 text-[#06d6a0] border border-[#06d6a0]/20">
-              v0.5.0
+              v0.6.0
             </span>
           </a>
 
@@ -76,7 +76,11 @@ export function Navbar() {
               <span className="text-sm font-medium">GitHub</span>
               <ExternalLink className="w-3 h-3 opacity-50" />
             </a>
-            <Button className="bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-semibold hover:shadow-[0_0_30px_rgba(6,214,160,0.3)] transition-all border-0">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-bold text-lg px-8 py-6 hover:shadow-[0_0_30px_rgba(6,214,160,0.3)] transition-all border-0"
+              onClick={() => document.getElementById('chat')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               Empezar Gratis
             </Button>
           </div>
@@ -122,7 +126,7 @@ export function Navbar() {
                   Ver en GitHub
                   <ExternalLink className="w-3 h-3 opacity-50" />
                 </a>
-                <Button className="w-full bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-semibold border-0">
+                <Button className="w-full bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-semibold border-0" onClick={() => { setMobileOpen(false); document.getElementById('chat')?.scrollIntoView({ behavior: 'smooth' }) }}>
                   Empezar Gratis
                 </Button>
               </div>

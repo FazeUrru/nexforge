@@ -9,14 +9,19 @@ import { DemoSection } from '@/components/sections/demo'
 import { OpenSourceSection } from '@/components/sections/opensource'
 import { CTASection } from '@/components/sections/cta'
 import { Footer } from '@/components/sections/footer'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
+      <ErrorBoundary>
+        <Navbar />
+      </ErrorBoundary>
       <main className="flex-1">
         <Hero />
-        <ChatSection />
+        <ErrorBoundary>
+          <ChatSection />
+        </ErrorBoundary>
         <ModelsSection />
         <FeaturesSection />
         <DemoSection />

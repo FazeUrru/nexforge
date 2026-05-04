@@ -16,7 +16,7 @@ interface ModelConfig {
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
   'koda-1.3': {
     name: 'KODA 1.3',
-    systemPrompt: `You are KODA 1.3 from NexForge v0.5.0, the most advanced full-stack AI architect and developer. Respond in the user's language.
+    systemPrompt: `You are KODA 1.3 from NexForge v0.6.0, the most advanced full-stack AI architect and developer. Respond in the user's language.
 
 CAPABILITIES:
 - Full-stack application generation (React 19, Next.js 16, TypeScript, Tailwind CSS)
@@ -44,7 +44,7 @@ RULES:
   },
   'nova-1.1': {
     name: 'NOVA 1.1',
-    systemPrompt: `You are NOVA 1.1 from NexForge v0.5.0, a brilliant and versatile full-stack AI. Respond in the user's language.
+    systemPrompt: `You are NOVA 1.1 from NexForge v0.6.0, a brilliant and versatile full-stack AI. Respond in the user's language.
 
 CAPABILITIES:
 - Full-stack development with React 19, Next.js 16, TypeScript, Tailwind CSS
@@ -70,7 +70,7 @@ RULES:
   },
   'flux-0.9': {
     name: 'FLUX 0.9',
-    systemPrompt: `You are FLUX 0.9 from NexForge v0.5.0, the fastest AI for rapid prototyping. Respond in the user's language.
+    systemPrompt: `You are FLUX 0.9 from NexForge v0.6.0, the fastest AI for rapid prototyping. Respond in the user's language.
 
 CAPABILITIES:
 - Ultra-fast MVP and prototype generation
@@ -97,29 +97,29 @@ RULES:
 }
 
 const AGENT_PROMPTS = {
-  arq: `You are ARQ, the Architecture Agent from NexForge v0.5.0. Analyze the user's app request and provide a detailed architecture plan including:
+  arq: `You are ARQ, the Architecture Agent from NexForge v0.6.0. Analyze the user's app request and provide a detailed architecture plan including:
 1. System architecture diagram description
 2. Data models and relationships
 3. API endpoint structure
 4. Technology stack choices
 5. Folder structure
 Respond in the user's language. Be thorough and specific.`,
-  code: `You are CODE, the Implementation Agent from NexForge v0.5.0. Given the architecture plan, generate complete, production-ready code. Include ALL files - never use "..." or "// rest of code". Use React 19, Next.js 16, TypeScript, Tailwind CSS, shadcn/ui. Respond in the user's language.`,
-  qa: `You are QA, the Quality Agent from NexForge v0.5.0. Review the generated code for:
+  code: `You are CODE, the Implementation Agent from NexForge v0.6.0. Given the architecture plan, generate complete, production-ready code. Include ALL files - never use "..." or "// rest of code". Use React 19, Next.js 16, TypeScript, Tailwind CSS, shadcn/ui. Respond in the user's language.`,
+  qa: `You are QA, the Quality Agent from NexForge v0.6.0. Review the generated code for:
 1. Type errors and missing imports
 2. Logic bugs and edge cases
 3. Security vulnerabilities
 4. Performance issues
 5. Best practices compliance
 List specific issues found and provide corrected code snippets. Respond in the user's language.`,
-  ux: `You are UX, the Design Agent from NexForge v0.5.0. Analyze the app and suggest:
+  ux: `You are UX, the Design Agent from NexForge v0.6.0. Analyze the app and suggest:
 1. UI/UX improvements
 2. Accessibility enhancements
 3. Responsive design optimizations
 4. Animation and interaction improvements
 5. Design system consistency
 Provide specific, actionable suggestions with code examples. Respond in the user's language.`,
-  suggest: `You are a suggestion engine for NexForge v0.5.0. Given an app description or code, suggest 5 specific, actionable improvements. Each suggestion should have a title and a brief description of what to implement. Format as JSON array: [{"title":"...","description":"..."}]. Respond in the user's language.`,
+  suggest: `You are a suggestion engine for NexForge v0.6.0. Given an app description or code, suggest 5 specific, actionable improvements. Each suggestion should have a title and a brief description of what to implement. Format as JSON array: [{"title":"...","description":"..."}]. Respond in the user's language.`,
 }
 
 export const maxDuration = 300
@@ -143,11 +143,26 @@ async function callAI(
     if (content && content.trim().length > 0) {
       return content
     }
-    return 'No pude generar una respuesta válida. Intenta de nuevo.'
+    throw new Error('Empty response from AI model')
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error'
     console.error('AI call failed:', msg)
-    throw error
+
+    // Provide user-friendly error classification
+    if (msg.includes('rate limit') || msg.includes('429')) {
+      throw new Error('El servidor de IA está ocupado. Espera unos segundos e intenta de nuevo.')
+    }
+    if (msg.includes('timeout') || msg.includes('ETIMEDOUT')) {
+      throw new Error('La IA tardó demasiado en responder. Intenta de nuevo.')
+    }
+    if (msg.includes('network') || msg.includes('ECONNREFUSED') || msg.includes('fetch failed')) {
+      throw new Error('No se pudo conectar con el servidor de IA. Verifica tu conexión.')
+    }
+    if (msg.includes('Empty response')) {
+      throw new Error('La IA no pudo generar una respuesta. Intenta reformular tu mensaje.')
+    }
+
+    throw new Error(`Error del servidor de IA: ${msg}`)
   }
 }
 
@@ -187,14 +202,26 @@ export async function POST(request: NextRequest) {
     }
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json({ error: 'Se requieren mensajes válidos' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Se requieren mensajes válidos para generar una respuesta.' },
+        { status: 400 }
+      )
+    }
+
+    // Validate that all messages have content
+    const hasEmptyMessages = messages.some((m) => !m.content || m.content.trim().length === 0)
+    if (hasEmptyMessages) {
+      return NextResponse.json(
+        { error: 'Todos los mensajes deben tener contenido. No envíes mensajes vacíos.' },
+        { status: 400 }
+      )
     }
 
     if (agent && agent in AGENT_PROMPTS) {
       const recentMessages = messages.slice(-4)
       const agentResult = await callAgent(agent as keyof typeof AGENT_PROMPTS, recentMessages)
       return NextResponse.json({
-        message: agentResult || 'El agente no pudo generar una respuesta.',
+        message: agentResult || 'El agente no pudo generar una respuesta. Intenta de nuevo.',
         agent,
         model: 'NexForge Agents',
         modelKey: model || 'koda-1.3',
@@ -219,7 +246,7 @@ export async function POST(request: NextRequest) {
 
     if (!config) {
       return NextResponse.json(
-        { error: `Modelo no válido. Opciones: ${Object.keys(MODEL_CONFIGS).join(', ')}` },
+        { error: `Modelo no válido. Opciones disponibles: ${Object.keys(MODEL_CONFIGS).join(', ')}` },
         { status: 400 }
       )
     }
@@ -265,6 +292,12 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor'
     console.error('Chat API error:', errorMessage)
-    return NextResponse.json({ error: errorMessage }, { status: 500 })
+
+    // Return structured error with user-friendly messages
+    const statusCode = errorMessage.includes('no válido') ? 400 : 500
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: statusCode }
+    )
   }
 }

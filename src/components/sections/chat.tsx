@@ -12,7 +12,7 @@ import {
   Copy, Check, Volume2, VolumeX, Pencil, MessageSquare,
   GitBranch, RefreshCw, Eye, Globe, Lightbulb, Users,
   Architecture, Wrench, TestTube2, Paintbrush, ArrowRight,
-  ExternalLink, Clock, Layers, Activity, Github,
+  ExternalLink, Clock, Layers, Activity, Github, AlertTriangle,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -141,7 +141,7 @@ const suggestedPrompts = [
   { icon: '💰', text: 'Genera una app de finanzas con presupuestos, gráficos y exportación' },
 ]
 
-const NEXFORGE_VERSION = '0.5.0'
+const NEXFORGE_VERSION = '0.6.0'
 
 // ─── Complexity Analyzer ─────────────────────────────────────────
 
@@ -550,6 +550,10 @@ export function ChatSection() {
   const [activeAgents, setActiveAgents] = useState<Record<string, AgentResult>>({})
   const [complexityInfo, setComplexityInfo] = useState<ReturnType<typeof analyzeComplexity> | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
+  const [isRetrying, setIsRetrying] = useState(false)
+  const [isSavingEdit, setIsSavingEdit] = useState(false)
+  const [isCopied, setIsCopied] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -796,9 +800,30 @@ export function ChatSection() {
 
   // ─── Send Message ───────────────────────────────────────────
 
+  // ─── Input Validation ──────────────────────────────────────
+
+  const validateInput = (text: string): string | null => {
+    const trimmed = text.trim()
+    if (trimmed.length === 0) return 'Escribe algo para que la IA pueda ayudarte.'
+    if (trimmed.length < 5) return 'Tu mensaje es demasiado corto. Describe mejor lo que necesitas (mínimo 5 caracteres).'
+    return null
+  }
+
   const handleSend = async (overrideMessages?: Message[]) => {
     const messagesToSend = overrideMessages || messages
     const textToSend = overrideMessages ? '' : input.trim()
+
+    // Validate input for new messages (not for retries/edits)
+    if (!overrideMessages) {
+      const error = validateInput(textToSend)
+      if (error) {
+        setValidationError(error)
+        setTimeout(() => setValidationError(null), 4000)
+        return
+      }
+    }
+
+    setValidationError(null)
     if ((!textToSend && !overrideMessages) || isLoading) return
 
     const userMessage: Message = {
@@ -897,19 +922,32 @@ export function ChatSection() {
       }
     } catch (error) {
       const isAbort = error instanceof Error && error.name === 'AbortError'
+      const isNetworkError = error instanceof Error && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed'))
+      const isTimeoutError = error instanceof Error && (error.name === 'AbortError' || error.message.includes('timeout'))
+
       if (!isAbort) {
         setPlanSteps([])
         setShowPlan(false)
         setShowAgents(false)
       }
 
+      // Clear the empty assistant message and show friendly error
       setMessages((prev) => {
         const filtered = prev.filter((m) => m.id !== assistantId)
-        const errText = isAbort
-          ? 'Generación cancelada.'
-          : error instanceof Error
-            ? `Error de conexión: ${error.message}. La IA se auto-corregirá en el siguiente intento.`
-            : 'No se pudo conectar con la IA. Reintentando con auto-corrección...'
+        let errText: string
+
+        if (isAbort || isTimeoutError) {
+          errText = '⏱️ La generación tardó demasiado y fue cancelada. Intenta de nuevo — la IA responderá más rápido.'
+        } else if (isNetworkError) {
+          errText = '🌐 No se pudo conectar con el servidor. Verifica tu conexión a internet e intenta de nuevo.'
+        } else if (error instanceof Error && error.message.includes('Empty response')) {
+          errText = '🤖 La IA no pudo generar una respuesta. Intenta reformular tu mensaje.'
+        } else if (error instanceof Error) {
+          errText = `⚠️ El agente tuvo un problema: "${error.message}". Intenta de nuevo — la IA se auto-corregirá.`
+        } else {
+          errText = '⚠️ Ocurrió un error inesperado. Intenta de nuevo y funcionará.'
+        }
+
         return [
           ...filtered,
           { id: assistantId, role: 'assistant', content: errText, model: currentModel.name, isStreaming: false },
@@ -1003,9 +1041,11 @@ export function ChatSection() {
   }
 
   const handleRetry = async () => {
+    if (isRetrying || isLoading) return
+    setIsRetrying(true)
     if (streamingIntervalRef.current) { clearInterval(streamingIntervalRef.current); streamingIntervalRef.current = null }
     const lastUserIdx = [...messages].reverse().findIndex((m) => m.role === 'user')
-    if (lastUserIdx === -1) return
+    if (lastUserIdx === -1) { setIsRetrying(false); return }
     const actualIdx = messages.length - 1 - lastUserIdx
     const trimmed = messages.slice(0, actualIdx + 1)
     const lastUserMsg = messages[actualIdx]
@@ -1020,7 +1060,10 @@ export function ChatSection() {
           textareaRef.current.style.height = 'auto'
           textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 150) + 'px'
         }
-      }, 50)
+        setIsRetrying(false)
+      }, 150)
+    } else {
+      setIsRetrying(false)
     }
   }
 
@@ -1035,10 +1078,20 @@ export function ChatSection() {
     }, 50)
   }
 
-  const handleSaveEdit = (messageId: string) => {
+  const handleSaveEdit = async (messageId: string) => {
+    // Validate edited text
+    const trimmedEdit = editText.trim()
+    const error = validateInput(trimmedEdit)
+    if (error) {
+      setValidationError(error)
+      setTimeout(() => setValidationError(null), 4000)
+      return
+    }
+
     const msgIndex = messages.findIndex((m) => m.id === messageId)
     if (msgIndex === -1) return
 
+    setIsSavingEdit(true)
     const updatedMessages = messages.slice(0, msgIndex)
     const editedMessage: Message = { ...messages[msgIndex], content: editText }
     setMessages(updatedMessages)
@@ -1095,21 +1148,26 @@ export function ChatSection() {
             setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, selfCorrected: true } : m))
           }
         })
-        .catch(() => {
+        .catch((error) => {
+          const isNetworkError = error instanceof Error && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed'))
+          const errText = isNetworkError
+            ? '🌐 No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo.'
+            : '⚠️ El agente tuvo un problema al procesar tu edición. Intenta de nuevo.'
           setMessages((prev) => {
             const filtered = prev.filter((m) => m.id !== assistantId)
-            return [...filtered, { id: assistantId, role: 'assistant', content: 'Error de conexión. Intenta de nuevo.', model: currentModel.name, isStreaming: false }]
+            return [...filtered, { id: assistantId, role: 'assistant', content: errText, model: currentModel.name, isStreaming: false }]
           })
           setPlanSteps([])
           setShowPlan(false)
         })
-        .finally(() => setIsLoading(false))
+        .finally(() => { setIsLoading(false); setIsSavingEdit(false) })
     }
   }
 
   const handleCancelEdit = () => { setEditingMessageId(null); setEditText('') }
 
   const handleCopyMessage = async (messageId: string, content: string) => {
+    setIsCopied(true)
     try {
       await navigator.clipboard.writeText(content)
     } catch {
@@ -1121,7 +1179,7 @@ export function ChatSection() {
       document.body.removeChild(textArea)
     }
     setCopiedId(messageId)
-    setTimeout(() => setCopiedId(null), 2000)
+    setTimeout(() => { setCopiedId(null); setIsCopied(false) }, 2000)
   }
 
   const handleListenMessage = (messageId: string, content: string) => {
@@ -1243,8 +1301,8 @@ export function ChatSection() {
             </button>
           )}
           {messages.length > 0 && !isLoading && (
-            <button onClick={handleRetry} className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title="Reintentar">
-              <RotateCcw className="w-4 h-4" />
+            <button onClick={handleRetry} disabled={isRetrying} className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed" title="Reintentar">
+              {isRetrying ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
             </button>
           )}
           {messages.length > 0 && (
@@ -1343,10 +1401,10 @@ export function ChatSection() {
                           className="w-full min-h-[60px] max-h-[200px] resize-none bg-[oklch(0.08_0.02_260)] border border-[#06d6a0]/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#06d6a0]/50"
                         />
                         <div className="flex gap-2">
-                          <button onClick={() => handleSaveEdit(message.id)} className="px-3 py-1.5 rounded-lg bg-[#06d6a0] text-[#0a0f1c] text-xs font-semibold hover:bg-[#06d6a0]/80 transition-colors">
-                            Enviar editado
+                          <button onClick={() => handleSaveEdit(message.id)} disabled={isSavingEdit} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#06d6a0] text-[#0a0f1c] text-xs font-semibold hover:bg-[#06d6a0]/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            {isSavingEdit ? <><Loader2 className="w-3 h-3 animate-spin" /> Guardando...</> : 'Enviar editado'}
                           </button>
-                          <button onClick={handleCancelEdit} className="px-3 py-1.5 rounded-lg bg-[oklch(0.2_0.03_260)] text-[oklch(0.6_0.02_200)] text-xs font-medium hover:bg-[oklch(0.25_0.04_260)] transition-colors">
+                          <button onClick={handleCancelEdit} disabled={isSavingEdit} className="px-3 py-1.5 rounded-lg bg-[oklch(0.2_0.03_260)] text-[oklch(0.6_0.02_200)] text-xs font-medium hover:bg-[oklch(0.25_0.04_260)] transition-colors disabled:opacity-50">
                             Cancelar
                           </button>
                         </div>
@@ -1386,8 +1444,8 @@ export function ChatSection() {
                         <button onClick={() => handleEditMessage(message.id, message.content)} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title="Editar mensaje">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => handleCopyMessage(message.id, message.content)} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title="Copiar mensaje">
-                          {copiedId === message.id ? <Check className="w-3.5 h-3.5 text-[#06d6a0]" /> : <Copy className="w-3.5 h-3.5" />}
+                        <button onClick={() => handleCopyMessage(message.id, message.content)} disabled={isCopied} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all disabled:cursor-not-allowed" title="Copiar mensaje">
+                          {isCopied && copiedId === message.id ? <Check className="w-3.5 h-3.5 text-[#06d6a0]" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
                         <button onClick={() => handleListenMessage(message.id, message.content)} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title={speakingId === message.id ? 'Detener lectura' : 'Escuchar mensaje'}>
                           {speakingId === message.id ? <VolumeX className="w-3.5 h-3.5 text-[#06d6a0]" /> : <Volume2 className="w-3.5 h-3.5" />}
@@ -1639,6 +1697,20 @@ export function ChatSection() {
 
       {/* Input */}
       <div className="border-t border-[oklch(0.2_0.03_260)] bg-[oklch(0.08_0.02_260)]/90 backdrop-blur-sm px-4 sm:px-6 py-3 shrink-0">
+        {/* Validation error toast */}
+        <AnimatePresence>
+          {validationError && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: 10, height: 0 }}
+              className="mb-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              {validationError}
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="flex items-end gap-3 max-w-4xl mx-auto">
           <div className="flex-1 relative">
             <Textarea
@@ -1652,7 +1724,7 @@ export function ChatSection() {
           </div>
           <Button
             onClick={() => handleSend()}
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || input.trim().length < 5}
             className="bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-bold hover:shadow-[0_0_20px_rgba(6,214,160,0.3)] transition-all border-0 px-4 py-3 rounded-xl disabled:opacity-40"
           >
             {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
@@ -1664,6 +1736,9 @@ export function ChatSection() {
           <span className="text-[10px] text-[oklch(0.3_0.02_200)]">Auto-Corrección</span>
           <span className="text-[10px] text-[oklch(0.3_0.02_200)]">·</span>
           <span className="text-[10px] text-[oklch(0.3_0.02_200)]">Vista Previa</span>
+          {input.trim().length > 0 && input.trim().length < 5 && (
+            <span className="text-[10px] text-[#f59e0b]">{input.trim().length}/5 caracteres mín.</span>
+          )}
         </div>
       </div>
     </>

@@ -36,10 +36,10 @@ const principles = [
 ]
 
 const recentChanges = [
+  { version: 'v0.6.0', date: 'May 2026', changes: ['Manejo de errores claro y amigable', 'Loading states en todos los botones', 'Validación de input (mín. 5 caracteres)', 'Error Boundary para crashes inesperados', 'Enlaces muertos eliminados', 'UI limpia sin placeholders rotos'] },
   { version: 'v0.5.0', date: 'May 2026', changes: ['4 Agentes: ARQ, CODE, QA, UX', 'Vista previa del código', 'Botón Publicar con deploy', 'Sugerencias de mejora IA', 'Fases adaptativas por complejidad', 'KODA 1.3 · NOVA 1.1 · FLUX 0.9'] },
   { version: 'v0.4.0', date: 'May 2026', changes: ['Auto-corrección integrada', 'Botones editar/copiar/escuchar', 'Planificación extendida', 'KODA 1.1 · NOVA 0.9 · FLUX 0.7'] },
   { version: 'v0.3.0', date: 'Abr 2026', changes: ['Planificación en tiempo real', 'Chat a pantalla completa', 'Streaming optimizado', 'KODA 0.9 · NOVA 0.7 · FLUX 0.5'] },
-  { version: 'v0.2.0', date: 'Mar 2026', changes: ['Chat interactivo con IA', '3 modelos disponibles', 'Simulación de streaming', 'Versión inicial OpenSource'] },
 ]
 
 export function OpenSourceSection() {

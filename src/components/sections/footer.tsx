@@ -1,6 +1,6 @@
 'use client'
 
-import { Terminal, Github, Twitter, MessageCircle, ExternalLink } from 'lucide-react'
+import { Terminal, Github, ExternalLink } from 'lucide-react'
 
 const GITHUB_REPO_URL = 'https://github.com/FazeUrru/nexforge'
 
@@ -12,21 +12,21 @@ const footerLinks = {
     { label: 'Changelog', href: `${GITHUB_REPO_URL}/releases` },
   ],
   Recursos: [
-    { label: 'Documentación', href: '#' },
-    { label: 'Tutoriales', href: '#' },
-    { label: 'API Reference', href: '#' },
-    { label: 'Blog', href: '#' },
+    { label: 'Repositorio', href: GITHUB_REPO_URL },
+    { label: 'Issues', href: `${GITHUB_REPO_URL}/issues` },
+    { label: 'Pull Requests', href: `${GITHUB_REPO_URL}/pulls` },
+    { label: 'Wiki', href: `${GITHUB_REPO_URL}/wiki` },
   ],
   Comunidad: [
-    { label: 'Discord', href: '#' },
     { label: 'GitHub', href: GITHUB_REPO_URL },
-    { label: 'Twitter', href: '#' },
     { label: 'Contribuir', href: `${GITHUB_REPO_URL}/issues` },
+    { label: 'Discusiones', href: `${GITHUB_REPO_URL}/discussions` },
+    { label: 'Releases', href: `${GITHUB_REPO_URL}/releases` },
   ],
   Legal: [
     { label: 'Licencia MIT', href: `${GITHUB_REPO_URL}/blob/main/LICENSE` },
-    { label: 'Privacidad', href: '#' },
-    { label: 'Términos', href: '#' },
+    { label: 'Código de Conducta', href: `${GITHUB_REPO_URL}/blob/main/CODE_OF_CONDUCT.md` },
+    { label: 'Seguridad', href: `${GITHUB_REPO_URL}/security` },
   ],
 }
 
@@ -51,12 +51,6 @@ export function Footer() {
             <div className="flex items-center gap-3">
               <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all">
                 <Github className="w-5 h-5" />
-              </a>
-              <a href="#" className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all">
-                <MessageCircle className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -95,10 +89,10 @@ export function Footer() {
               className="flex items-center gap-1.5 font-mono px-2 py-1 rounded bg-[oklch(0.15_0.03_260)] border border-[oklch(0.2_0.03_260)] hover:border-[#06d6a0]/30 hover:text-[#06d6a0] transition-all"
             >
               <Github className="w-3 h-3" />
-              v0.5.0
+              v0.6.0
             </a>
             <span className="font-mono px-2 py-1 rounded bg-[#06d6a0]/10 border border-[#06d6a0]/20 text-[#06d6a0]">
-              4 Agentes
+              Estabilidad Básica
             </span>
           </div>
         </div>

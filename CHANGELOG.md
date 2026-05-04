@@ -7,6 +7,39 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ---
 
+## [0.6.0] — 2026-05-05
+
+### 🛡️ Estabilidad Básica (Fix & Polish)
+
+Versión enfocada en hacer que la herramienta sea usable sin frustración. Errores claros, loading states reales, validación de input y UI limpia.
+
+### ✨ Añadido
+
+- **Manejo de Errores Silenciosos**: Mensajes de error claros y amigables en lugar de pantallas blancas o crashes. Clasificación de errores: timeout, red, respuesta vacía, error de agente
+- **Error Boundary**: Componente React ErrorBoundary que captura crashes inesperados y muestra un mensaje amigable con botón de reintento
+- **Loading States Reales**: Todos los botones ahora tienen estados de loading visibles (spinner + texto cambiante): Reintentar, Guardar Edición, Copiar
+- **Validación de Input**: Bloqueo de prompts vacíos y menores de 5 caracteres con mensaje de error animado. Contador de caracteres mínimo visible
+- **Validación en Edición**: La edición de mensajes también valida que el texto tenga al menos 5 caracteres
+- **Botón Enviar Deshabilitado**: El botón de enviar se deshabilita cuando el input tiene menos de 5 caracteres
+
+### 🔧 Mejoras
+
+- **Mensajes de Error Clasificados**: Errores de red, timeout, respuesta vacía y errores de agente tienen mensajes distintos y específicos con emojis
+- **API Route Mejorada**: Validación de mensajes vacíos en el servidor, errores clasificados (rate limit, timeout, red), mensajes user-friendly
+- **Botones con Estado**: Reintentar muestra spinner, Guardar Editado muestra "Guardando...", Copiar deshabilita durante la operación
+- **UI Limpia**: Eliminados enlaces muertos (#) del footer (Documentación, Tutoriales, API Reference, Blog, Discord, Twitter, Privacidad, Términos) reemplazados con enlaces reales a GitHub
+- **CTA Limpio**: Botón "Leer documentación" (enlace muerto) reemplazado por "Ver en GitHub" (enlace real)
+- **Botones Funcionales**: "Empezar Gratis" y "Empezar a Crear" ahora navegan al chat. "Ver Demo" navega a la sección demo
+- **Versión Actualizada**: v0.6.0 en navbar, hero, footer, chat, API routes, demo
+
+### 🗑️ Eliminado
+
+- **Enlaces Muertos**: Eliminados todos los enlaces `#` que no llevaban a ningún sitio
+- **Placeholders**: Eliminados enlaces a páginas no existentes (Discord, Twitter, Blog, Tutoriales, API Reference)
+- **Twitter/Messages Icons**: Eliminados iconos de redes sociales sin presencia real
+
+---
+
 ## [0.5.0] — 2026-05-01
 
 ### ✨ Añadido
@@ -122,6 +155,7 @@ UX (Diseño)        → Optimiza UI/UX, accesibilidad, responsive
 
 ---
 
+[0.6.0]: https://github.com/FazeUrru/nexforge/releases/tag/v0.6.0
 [0.5.0]: https://github.com/FazeUrru/nexforge/releases/tag/v0.5.0
 [0.4.0]: https://github.com/FazeUrru/nexforge/releases/tag/v0.4.0
 [0.3.0]: https://github.com/FazeUrru/nexforge/releases/tag/v0.3.0

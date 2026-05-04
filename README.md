@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.5.0-%2306d6a0?style=for-the-badge&labelColor=%230a0f1c" alt="Version">
+  <img src="https://img.shields.io/badge/version-0.6.0-%2306d6a0?style=for-the-badge&labelColor=%230a0f1c" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-%2306d6a0?style=for-the-badge&labelColor=%230a0f1c" alt="License">
   <img src="https://img.shields.io/badge/price-FREE-%2306d6a0?style=for-the-badge&labelColor=%230a0f1c" alt="Free">
   <img src="https://img.shields.io/badge/AI-4_Agentes-%2300ffc8?style=for-the-badge&labelColor=%230a0f1c" alt="4 AI Agents">
-  <img src="https://img.shields.io/badge/AI-Auto--Corrección-%2300ffc8?style=for-the-badge&labelColor=%230a0f1c" alt="Auto-Correction">
+  <img src="https://img.shields.io/badge/AI-Estabilidad_Básica-%2300ffc8?style=for-the-badge&labelColor=%230a0f1c" alt="Estabilidad Básica">
 </p>
 
 <h1 align="center">
@@ -31,6 +31,10 @@ NexForge es una plataforma web impulsada por Inteligencia Artificial que genera 
 
 ### ✨ Características principales
 
+- 🛡️ **Manejo de errores claro** — Mensajes de error amigables en lugar de crashes o pantallas blancas
+- ⏳ **Loading states reales** — Todos los botones tienen spinners y texto cambiante cuando están procesando
+- ✅ **Validación de input** — Bloqueo de prompts vacíos o demasiado cortos (< 5 caracteres)
+- 🧹 **UI limpia** — Sin enlaces muertos, sin placeholders rotos, sin elementos huérfanos
 - 🤖 **4 Agentes IA Especializados** — ARQ (Arquitecto), CODE (Programador), QA (Calidad) y UX (Diseño) trabajan coordinados en tiempo real
 - 🧠 **Auto-corrección IA** — La IA detecta y corrige sus propios errores antes de mostrar el resultado
 - 📝 **Editar mensajes** — Edita cualquier mensaje del chat y regenera desde ese punto
@@ -165,6 +169,14 @@ La aplicación estará disponible en `http://localhost:3000`
 
 ## 📋 Changelog
 
+### v0.6.0 (Mayo 2026)
+- ✅ Manejo de errores claro y amigable con clasificación (timeout, red, vacío, agente)
+- ✅ Error Boundary para capturar crashes inesperados
+- ✅ Loading states reales en todos los botones (Reintentar, Guardar, Copiar)
+- ✅ Validación de input: mínimo 5 caracteres para enviar
+- ✅ Enlaces muertos eliminados, UI limpia sin placeholders
+- ✅ Botones funcionales: "Empezar Gratis" navega al chat, "Ver Demo" al demo
+
 ### v0.5.0 (Mayo 2026)
 - ✅ 4 Agentes IA Especializados: ARQ, CODE, QA y UX en tiempo real
 - ✅ Vista Previa del Código con syntax highlighting y navegación entre archivos
@@ -219,5 +231,5 @@ Este proyecto está bajo la **Licencia MIT** — consulta el archivo [LICENSE](L
 
 <p align="center">
   Hecho con 🤖 IA y ❤️ amor OpenSource<br/>
-  <strong>NexForge v0.5.0</strong> · <a href="https://fazeurru.github.io/nexforge/">Web</a> · <a href="https://github.com/FazeUrru/nexforge">GitHub</a>
+  <strong>NexForge v0.6.0</strong> · <a href="https://fazeurru.github.io/nexforge/">Web</a> · <a href="https://github.com/FazeUrru/nexforge">GitHub</a>
 </p>

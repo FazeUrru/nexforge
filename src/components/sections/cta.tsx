@@ -2,7 +2,9 @@
 
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight, Sparkles, Github } from 'lucide-react'
+
+const GITHUB_REPO_URL = 'https://github.com/FazeUrru/nexforge'
 
 export function CTASection() {
   return (
@@ -30,7 +32,7 @@ export function CTASection() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#06d6a0]/10 border border-[#06d6a0]/20 mb-6"
             >
               <Sparkles className="w-4 h-4 text-[#06d6a0]" />
-              <span className="text-sm font-medium text-[#06d6a0]">4 Agentes · Vista Previa · Publicar · 100% Gratis</span>
+              <span className="text-sm font-medium text-[#06d6a0]">4 Agentes · Estabilidad Básica · 100% Gratis</span>
             </motion.div>
 
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
@@ -46,17 +48,21 @@ export function CTASection() {
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-bold text-lg px-8 py-6 hover:shadow-[0_0_40px_rgba(6,214,160,0.3)] transition-all border-0 group"
+                onClick={() => document.getElementById('chat')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Crear mi primera app
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-[oklch(0.3_0.03_260)] text-[oklch(0.7_0.02_200)] hover:bg-[oklch(0.15_0.03_260)] font-semibold px-8 py-6 transition-all"
-              >
-                Leer documentación
-              </Button>
+              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-[oklch(0.3_0.03_260)] text-[oklch(0.7_0.02_200)] hover:bg-[oklch(0.15_0.03_260)] font-semibold px-8 py-6 transition-all"
+                >
+                  <Github className="w-5 h-5 mr-2" />
+                  Ver en GitHub
+                </Button>
+              </a>
             </div>
           </div>
         </motion.div>

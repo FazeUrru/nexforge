@@ -31,7 +31,7 @@ export function Hero() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#06d6a0]/10 border border-[#06d6a0]/20 mb-8"
         >
           <Sparkles className="w-4 h-4 text-[#06d6a0]" />
-          <span className="text-sm font-medium text-[#06d6a0]">v0.5.0 — 4 Agentes IA · Vista Previa · Publicar · OpenSource</span>
+          <span className="text-sm font-medium text-[#06d6a0]">v0.6.0 — 4 Agentes IA · Estabilidad Básica · OpenSource</span>
         </motion.div>
 
         <motion.h1
@@ -68,6 +68,7 @@ export function Hero() {
           <Button
             size="lg"
             className="bg-gradient-to-r from-[#06d6a0] to-[#00ffc8] text-[#0a0f1c] font-bold text-lg px-8 py-6 hover:shadow-[0_0_40px_rgba(6,214,160,0.3)] transition-all border-0 group"
+            onClick={() => document.getElementById('chat')?.scrollIntoView({ behavior: 'smooth' })}
           >
             Empezar a Crear
             <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -76,6 +77,7 @@ export function Hero() {
             size="lg"
             variant="outline"
             className="border-[#06d6a0]/30 text-[#06d6a0] hover:bg-[#06d6a0]/10 font-semibold text-lg px-8 py-6 transition-all"
+            onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
           >
             Ver Demo
           </Button>

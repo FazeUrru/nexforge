@@ -7,7 +7,7 @@ import { Terminal, Play, Copy, Check } from 'lucide-react'
 
 const codeLines = [
   { text: '// Proyecto: E-Commerce App', color: '#6b7280', delay: 0 },
-  { text: '// Generado por KODA 1.3 + 4 Agentes — NexForge v0.5.0', color: '#6b7280', delay: 100 },
+  { text: '// Generado por KODA 1.3 + 4 Agentes — NexForge v0.6.0', color: '#6b7280', delay: 100 },
   { text: '', color: '', delay: 200 },
   { text: 'import', color: '#c678dd', delay: 300, rest: ' { NextForge } ', restColor: '#e06c75', rest2: 'from', rest2Color: '#c678dd', rest3: " '@nexforge/core'", rest3Color: '#98c379' },
   { text: 'import', color: '#c678dd', delay: 400, rest: ' { PrismaClient } ', restColor: '#e06c75', rest2: 'from', rest2Color: '#c678dd', rest3: " '@prisma/client'", rest3Color: '#98c379' },
