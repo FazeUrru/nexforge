@@ -72,3 +72,34 @@ Stage Summary:
 - All assets load correctly with /nexforge/ basePath
 - GitHub repo homepage and description updated
 - Auto-deploy via GitHub Actions confirmed working
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Implement v0.6.0 "Estabilidad Básica" (Fix & Polish) for NexForge
+
+Work Log:
+- Explored all source files (chat.tsx, page.tsx, footer.tsx, navbar.tsx, hero.tsx, cta.tsx, demo.tsx, opensource.tsx, models.tsx, API route)
+- Created ErrorBoundary component for catching unexpected crashes
+- Implemented friendly error messages classified by type (timeout, network, empty response, agent error)
+- Added loading states to all buttons (Retry, Save Edit, Copy) with spinners and changing text
+- Implemented input validation: minimum 5 characters, animated validation toast, character counter
+- Added validation to edit message flow too
+- Cleaned up UI: removed all dead links (#) from footer, replaced with real GitHub links
+- Fixed CTA section: replaced "Leer documentación" (dead link) with "Ver en GitHub" (real link)
+- Made "Empezar Gratis" and "Empezar a Crear" buttons navigate to chat section
+- Made "Ver Demo" button navigate to demo section
+- Updated all version references to 0.6.0 across all files
+- Updated CHANGELOG.md with v0.6.0 entry
+- Updated README.md with v0.6.0 features
+- Updated package.json to v0.6.0
+- Updated API route with better error handling and input validation
+- Built project successfully (no compilation errors)
+- Committed all changes locally
+- GitHub push failed due to expired token (REDACTED_TOKEN returns 401 Bad credentials)
+
+Stage Summary:
+- v0.6.0 "Estabilidad Básica" fully implemented and committed locally
+- All 4 objectives completed: Error handling, Loading states, Input validation, UI cleanup
+- 25 files changed, 304 insertions, 74 deletions
+- GitHub push requires new token from user
