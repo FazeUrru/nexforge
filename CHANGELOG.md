@@ -7,6 +7,31 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ---
 
+## [0.7.0] — 2026-05-05
+
+### 📋 Consola de Logs y UX Mejorada
+
+Versión enfocada en visibilidad del proceso y control del usuario. Consola de logs en tiempo real, preview parcial del código, regeneración con un clic y copia rápida.
+
+### ✨ Añadido
+
+- **Consola de Logs Simple**: Panel de logs en tiempo real que muestra mensajes secuenciales: "Conectando...", "Generando estructura...", "Escribiendo CSS...", "Verificando calidad...", etc. Los logs tienen colores por tipo (info, success, warning, error) y timestamps
+- **Preview Parcial**: La vista previa del código se actualiza durante el streaming, mostrando bloques de código incompletos cada 20 palabras en lugar de esperar al 100% de la generación
+- **Botón "Regenerar"**: Botón en cada respuesta del asistente y en la cabecera que reenvía automáticamente el último prompt sin necesidad de recargar la página ni copiar/pegar manualmente
+- **Copiar Código**: Botón de copia rápida en 3 ubicaciones: (1) junto a cada mensaje con código, (2) en la cabecera de la vista previa para copiar todo, (3) dentro de cada archivo individual en la vista previa. Feedback visual al copiar
+
+### 🐛 Corregido
+
+- **Auto-scroll eliminado**: Se ha eliminado el scroll automático que ocurría al enviar un prompt a la IA. Ahora el usuario mantiene el control total de su posición de scroll y puede leer mensajes anteriores sin ser interrumpido
+
+### 🔧 Mejoras
+
+- **Iconos mejorados**: Añadidos iconos `Terminal` y `ClipboardCopy` de Lucide para la consola de logs y el botón de copiar código
+- **Regeneración automática**: El botón de reintentar ya no solo coloca el texto en el input, sino que reenvía automáticamente el mensaje
+- **Log entries con feedback**: Mensajes de log durante la generación, al recibir la respuesta del servidor y al completar o fallar
+
+---
+
 ## [0.6.0] — 2026-05-05
 
 ### 🛡️ Estabilidad Básica (Fix & Polish)
@@ -155,6 +180,7 @@ UX (Diseño)        → Optimiza UI/UX, accesibilidad, responsive
 
 ---
 
+[0.7.0]: https://github.com/FazeUrru/nexforge/releases/tag/v0.7.0
 [0.6.0]: https://github.com/FazeUrru/nexforge/releases/tag/v0.6.0
 [0.5.0]: https://github.com/FazeUrru/nexforge/releases/tag/v0.5.0
 [0.4.0]: https://github.com/FazeUrru/nexforge/releases/tag/v0.4.0
