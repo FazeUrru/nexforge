@@ -96,7 +96,7 @@ Work Log:
 - Updated API route with better error handling and input validation
 - Built project successfully (no compilation errors)
 - Committed all changes locally
-- GitHub push failed due to expired token (REDACTED_TOKEN returns 401 Bad credentials)
+- GitHub push failed due to expired token (old token returns 401 Bad credentials)
 
 Stage Summary:
 - v0.6.0 "Estabilidad Básica" fully implemented and committed locally
