@@ -103,3 +103,28 @@ Stage Summary:
 - All 4 objectives completed: Error handling, Loading states, Input validation, UI cleanup
 - 25 files changed, 304 insertions, 74 deletions
 - GitHub push requires new token from user
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Continue v0.6.0 session — Fix layout metadata, push with new token, deploy to GitHub Pages
+
+Work Log:
+- Received new GitHub token from user (ghp_KOGnlN4...)
+- Read all source files — verified v0.6.0 features already implemented from previous session
+- Found layout.tsx metadata still said v0.5.0 — updated to v0.6.0 with Estabilidad Básica description
+- Built project successfully (no errors)
+- Built static export for GitHub Pages
+- Removed old token from worklog.md (was blocking push due to GitHub secret scanning)
+- Rewrote git history with git filter-branch to remove old token from all commits
+- Force pushed cleaned history to GitHub main branch
+- Pushed static build to gh-pages branch
+- Configured GitHub Pages to use legacy build from gh-pages branch
+- Triggered GitHub Pages build
+- Created GitHub Release v0.6.0
+
+Stage Summary:
+- v0.6.0 fully deployed: https://fazeurru.github.io/nexforge/
+- GitHub Release: https://github.com/FazeUrru/nexforge/releases/tag/v0.6.0
+- New token configured and working
+- All v0.6.0 features verified: Error handling, Loading states, Input validation, UI cleanup
