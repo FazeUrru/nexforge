@@ -13,6 +13,7 @@ import {
   GitBranch, RefreshCw, Eye, Globe, Lightbulb, Users,
   Architecture, Wrench, TestTube2, Paintbrush, ArrowRight,
   ExternalLink, Clock, Layers, Activity, Github, AlertTriangle,
+  Terminal, ClipboardCopy,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -141,7 +142,7 @@ const suggestedPrompts = [
   { icon: '💰', text: 'Genera una app de finanzas con presupuestos, gráficos y exportación' },
 ]
 
-const NEXFORGE_VERSION = '0.6.0'
+const NEXFORGE_VERSION = '0.7.0'
 
 // ─── Complexity Analyzer ─────────────────────────────────────────
 
@@ -339,6 +340,15 @@ function extractCodeBlocks(content: string): CodeBlock[] {
     })
   }
   return blocks
+}
+
+// ─── Log Console Types ────────────────────────────────────────────
+
+interface LogEntry {
+  id: number
+  timestamp: number
+  message: string
+  type: 'info' | 'success' | 'warning' | 'error'
 }
 
 // ─── Main Component ──────────────────────────────────────────────
@@ -554,6 +564,11 @@ export function ChatSection() {
   const [isSavingEdit, setIsSavingEdit] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([])
+  const [showLogConsole, setShowLogConsole] = useState(false)
+  const [lastUserPrompt, setLastUserPrompt] = useState<string>('')
+  const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null)
+  const logIdRef = useRef(0)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -568,11 +583,7 @@ export function ChatSection() {
 
   // ─── Effects ─────────────────────────────────────────────────
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [])
-
-  useEffect(() => { scrollToBottom() }, [messages, planSteps, scrollToBottom])
+  // Auto-scroll removed — user controls their own scroll position
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -609,10 +620,18 @@ export function ChatSection() {
 
   // ─── Streaming ──────────────────────────────────────────────
 
+  // ─── Log Console ────────────────────────────────────────────
+
+  const addLog = useCallback((message: string, type: LogEntry['type'] = 'info') => {
+    logIdRef.current += 1
+    setLogEntries((prev) => [...prev, { id: logIdRef.current, timestamp: Date.now(), message, type }])
+  }, [])
+
   const simulateStreaming = useCallback((fullText: string, messageId: string) => {
     const words = fullText.split(/(\s+)/)
     let current = 0
     const speed = selectedModel === 'flux-0.9' ? 4 : selectedModel === 'nova-1.1' ? 7 : 10
+    let lastPreviewUpdate = 0
 
     const interval = setInterval(() => {
       current += 1
@@ -624,6 +643,20 @@ export function ChatSection() {
             : m
         )
       )
+
+      // Partial preview: update code preview every 20 words during streaming
+      if (current - lastPreviewUpdate >= 20) {
+        lastPreviewUpdate = current
+        const partialBlocks = extractCodeBlocks(revealed)
+        if (partialBlocks.length > 0) {
+          setPreviewCodeBlocks(partialBlocks)
+          setActivePreviewBlock(0)
+          if (!showCodePreview) {
+            setShowCodePreview(true)
+          }
+        }
+      }
+
       if (current >= words.length) {
         clearInterval(interval)
         streamingIntervalRef.current = null
@@ -640,6 +673,7 @@ export function ChatSection() {
           setPreviewCodeBlocks(codeBlocks)
           setActivePreviewBlock(0)
         }
+        addLog('Generación completada', 'success')
         // Fetch suggestions
         fetchSuggestions(messageId, fullText)
       }
@@ -647,7 +681,7 @@ export function ChatSection() {
 
     streamingIntervalRef.current = interval
     return interval
-  }, [selectedModel])
+  }, [selectedModel, showCodePreview])
 
   // ─── Suggestions Fetch ──────────────────────────────────────
 
@@ -826,6 +860,11 @@ export function ChatSection() {
     setValidationError(null)
     if ((!textToSend && !overrideMessages) || isLoading) return
 
+    // Clear previous logs and start fresh
+    setLogEntries([])
+    logIdRef.current = 0
+    setShowLogConsole(true)
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -840,6 +879,11 @@ export function ChatSection() {
     setPublishedUrl(null)
     setShowCodePreview(false)
 
+    // Track last user prompt for regenerate
+    if (textToSend) {
+      setLastUserPrompt(textToSend)
+    }
+
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
 
     // Analyze complexity
@@ -847,8 +891,26 @@ export function ChatSection() {
     const complexity = analyzeComplexity(promptText)
     setComplexityInfo(complexity)
     const isApp = isAppRequest(promptText)
+
+    // Add log entries based on the phase
+    addLog('Conectando con el servidor...', 'info')
+
     const steps = generatePlan(complexity, isApp)
     startPlanAnimation(steps)
+
+    // Add sequential log messages during generation
+    setTimeout(() => addLog('Analizando requisitos del proyecto...', 'info'), 800)
+    setTimeout(() => addLog(`Complejidad detectada: ${complexity.level.toUpperCase()}`, 'info'), 1500)
+    if (isApp) {
+      setTimeout(() => addLog('Generando estructura del proyecto...', 'info'), 2500)
+      setTimeout(() => addLog('Escribiendo componentes UI...', 'info'), 4000)
+      setTimeout(() => addLog('Implementando lógica de negocio...', 'info'), 5500)
+      setTimeout(() => addLog('Escribiendo CSS y estilos...', 'info'), 7000)
+      setTimeout(() => addLog('Verificando calidad del código...', 'warning'), 8500)
+    } else {
+      setTimeout(() => addLog('Procesando solicitud...', 'info'), 2500)
+      setTimeout(() => addLog('Generando respuesta...', 'info'), 3500)
+    }
 
     // Add empty assistant message
     setMessages((prev) => [
@@ -869,6 +931,7 @@ export function ChatSection() {
 
         // Start streaming simulation with demo response
         simulateStreaming(demoMessage, assistantId)
+        addLog('Respuesta recibida, iniciando streaming...', 'success')
 
         setMessages((prev) =>
           prev.map((m) => m.id === assistantId ? { ...m, selfCorrected: true } : m)
@@ -913,6 +976,7 @@ export function ChatSection() {
 
         // Start streaming simulation
         simulateStreaming(data.message, assistantId)
+        addLog('Respuesta recibida del servidor, iniciando streaming...', 'success')
 
         if (data.selfCorrected) {
           setMessages((prev) =>
@@ -922,6 +986,7 @@ export function ChatSection() {
       }
     } catch (error) {
       const isAbort = error instanceof Error && error.name === 'AbortError'
+      addLog('Error durante la generación', 'error')
       const isNetworkError = error instanceof Error && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed'))
       const isTimeoutError = error instanceof Error && (error.name === 'AbortError' || error.message.includes('timeout'))
 
@@ -1030,6 +1095,10 @@ export function ChatSection() {
     setComplexityInfo(null)
     setActiveAgents({})
     setShowAgents(false)
+    setLogEntries([])
+    setShowLogConsole(false)
+    setLastUserPrompt('')
+    logIdRef.current = 0
     if (streamingIntervalRef.current) { clearInterval(streamingIntervalRef.current); streamingIntervalRef.current = null }
     if (planTimerRef.current) { clearInterval(planTimerRef.current); planTimerRef.current = null }
     if (subStepTimerRef.current) { clearInterval(subStepTimerRef.current); subStepTimerRef.current = null }
@@ -1053,15 +1122,16 @@ export function ChatSection() {
     setPlanSteps([])
     setShowPlan(false)
     setIsLoading(false)
+
+    // Auto-send the last user message instead of just putting it in the input
     if (lastUserMsg) {
-      setInput(lastUserMsg.content)
+      setLastUserPrompt(lastUserMsg.content)
       setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.style.height = 'auto'
-          textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 150) + 'px'
-        }
         setIsRetrying(false)
-      }, 150)
+        // Create a synthetic overrideMessages to resend
+        const resendMessages = trimmed
+        handleSend(resendMessages)
+      }, 200)
     } else {
       setIsRetrying(false)
     }
@@ -1204,6 +1274,40 @@ export function ChatSection() {
     window.speechSynthesis.speak(utterance)
   }
 
+  const handleCopyCode = async (code: string, blockId: string) => {
+    try {
+      await navigator.clipboard.writeText(code)
+    } catch {
+      const textArea = document.createElement('textarea')
+      textArea.value = code
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+    }
+    setCopiedCodeId(blockId)
+    setTimeout(() => setCopiedCodeId(null), 2000)
+  }
+
+  const handleCopyAllCode = async () => {
+    const allCode = previewCodeBlocks.map((b) => {
+      const header = b.filename ? `// ${b.filename}\n` : ''
+      return header + b.code
+    }).join('\n\n// ─────────────────────────────────\n\n')
+    try {
+      await navigator.clipboard.writeText(allCode)
+    } catch {
+      const textArea = document.createElement('textarea')
+      textArea.value = allCode
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+    }
+    setCopiedCodeId('all')
+    setTimeout(() => setCopiedCodeId(null), 2000)
+  }
+
   const getActiveSubStep = (step: PlanStep): string | null => {
     if (step.status !== 'active' || !step.subSteps || step.subSteps.length === 0) return null
     return step.subSteps[currentSubStep % step.subSteps.length]
@@ -1291,6 +1395,16 @@ export function ChatSection() {
           )}
         </div>
         <div className="flex items-center gap-1">
+          {/* Log Console toggle */}
+          {logEntries.length > 0 && (
+            <button
+              onClick={() => setShowLogConsole(!showLogConsole)}
+              className={`p-2 rounded-lg transition-all ${showLogConsole ? 'text-[#06d6a0] bg-[#06d6a0]/10' : 'text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5'}`}
+              title="Consola de logs"
+            >
+              <Terminal className="w-4 h-4" />
+            </button>
+          )}
           {hasCode && !isLoading && (
             <button
               onClick={() => setShowCodePreview(!showCodePreview)}
@@ -1301,8 +1415,8 @@ export function ChatSection() {
             </button>
           )}
           {messages.length > 0 && !isLoading && (
-            <button onClick={handleRetry} disabled={isRetrying} className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed" title="Reintentar">
-              {isRetrying ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+            <button onClick={handleRetry} disabled={isRetrying} className="p-2 rounded-lg text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed" title="Regenerar última respuesta">
+              {isRetrying ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             </button>
           )}
           {messages.length > 0 && (
@@ -1441,6 +1555,11 @@ export function ChatSection() {
                     {/* Message action buttons */}
                     {!message.isStreaming && !editingMessageId && message.content && (
                       <div className="mt-2 flex items-center gap-1">
+                        {message.role === 'assistant' && (
+                          <button onClick={handleRetry} disabled={isRetrying || isLoading} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed" title="Regenerar respuesta">
+                            {isRetrying ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                          </button>
+                        )}
                         <button onClick={() => handleEditMessage(message.id, message.content)} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title="Editar mensaje">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
@@ -1451,9 +1570,14 @@ export function ChatSection() {
                           {speakingId === message.id ? <VolumeX className="w-3.5 h-3.5 text-[#06d6a0]" /> : <Volume2 className="w-3.5 h-3.5" />}
                         </button>
                         {message.codeBlocks && message.codeBlocks.length > 0 && (
-                          <button onClick={() => { setPreviewCodeBlocks(message.codeBlocks || []); setActivePreviewBlock(0); setShowCodePreview(true) }} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#8b5cf6] hover:bg-[#8b5cf6]/5 transition-all" title="Ver código">
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
+                          <>
+                            <button onClick={() => { const allCode = message.codeBlocks!.map((b) => (b.filename ? `// ${b.filename}\n` : '') + b.code).join('\n\n'); handleCopyCode(allCode, message.id + '-allcode') }} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title="Copiar todo el código">
+                              {copiedCodeId === message.id + '-allcode' ? <Check className="w-3.5 h-3.5 text-[#06d6a0]" /> : <ClipboardCopy className="w-3.5 h-3.5" />}
+                            </button>
+                            <button onClick={() => { setPreviewCodeBlocks(message.codeBlocks || []); setActivePreviewBlock(0); setShowCodePreview(true) }} className="p-1.5 rounded-md text-[oklch(0.35_0.02_200)] hover:text-[#8b5cf6] hover:bg-[#8b5cf6]/5 transition-all" title="Ver código">
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          </>
                         )}
                       </div>
                     )}
@@ -1586,6 +1710,61 @@ export function ChatSection() {
                 </motion.div>
               )}
 
+              {/* Log Console */}
+              <AnimatePresence>
+                {showLogConsole && logEntries.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: 8, height: 0 }}
+                    className="max-w-lg mx-auto overflow-hidden"
+                  >
+                    <div className="rounded-xl bg-[oklch(0.06_0.02_260)] border border-[oklch(0.2_0.03_260)] overflow-hidden">
+                      <div className="flex items-center justify-between px-3 py-2 border-b border-[oklch(0.15_0.02_260)] bg-[oklch(0.08_0.02_260)]">
+                        <div className="flex items-center gap-2">
+                          <Terminal className="w-3.5 h-3.5 text-[oklch(0.5_0.02_200)]" />
+                          <span className="text-[10px] font-mono text-[oklch(0.5_0.02_200)] uppercase tracking-wider">Consola</span>
+                        </div>
+                        <button onClick={() => setShowLogConsole(false)} className="p-1 rounded text-[oklch(0.35_0.02_200)] hover:text-white transition-colors">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <div className="max-h-[120px] overflow-y-auto px-3 py-2 space-y-1">
+                        {logEntries.map((entry) => (
+                          <div key={entry.id} className="flex items-center gap-2 text-[11px] font-mono">
+                            <span className="text-[oklch(0.3_0.02_200)] shrink-0">
+                              {new Date(entry.timestamp).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </span>
+                            <span className={`shrink-0 ${
+                              entry.type === 'success' ? 'text-[#06d6a0]' :
+                              entry.type === 'warning' ? 'text-[#f59e0b]' :
+                              entry.type === 'error' ? 'text-red-400' :
+                              'text-[oklch(0.5_0.02_200)]'
+                            }`}>
+                              {entry.type === 'success' ? '>' : entry.type === 'warning' ? '!' : entry.type === 'error' ? 'x' : '~'}
+                            </span>
+                            <span className={
+                              entry.type === 'success' ? 'text-[#06d6a0]' :
+                              entry.type === 'warning' ? 'text-[#f59e0b]' :
+                              entry.type === 'error' ? 'text-red-400' :
+                              'text-[oklch(0.6_0.02_200)]'
+                            }>
+                              {entry.message}
+                            </span>
+                          </div>
+                        ))}
+                        {isLoading && (
+                          <div className="flex items-center gap-2 text-[11px] font-mono text-[oklch(0.4_0.02_200)]">
+                            <span className="inline-block w-1.5 h-3 bg-[#06d6a0] animate-pulse" />
+                            Procesando...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div ref={messagesEndRef} />
             </div>
           )}
@@ -1608,9 +1787,14 @@ export function ChatSection() {
                   <span className="text-xs font-bold text-[#8b5cf6]">Vista Previa</span>
                   <span className="text-[10px] font-mono text-[oklch(0.4_0.02_200)]">{previewCodeBlocks.length} archivos</span>
                 </div>
-                <button onClick={() => setShowCodePreview(false)} className="p-1 rounded-md text-[oklch(0.4_0.02_200)] hover:text-white hover:bg-[oklch(0.15_0.03_260)] transition-all">
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button onClick={handleCopyAllCode} className="p-1 rounded-md text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:bg-[#06d6a0]/5 transition-all" title="Copiar todo el código">
+                    {copiedCodeId === 'all' ? <Check className="w-3.5 h-3.5 text-[#06d6a0]" /> : <ClipboardCopy className="w-3.5 h-3.5" />}
+                  </button>
+                  <button onClick={() => setShowCodePreview(false)} className="p-1 rounded-md text-[oklch(0.4_0.02_200)] hover:text-white hover:bg-[oklch(0.15_0.03_260)] transition-all">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               {/* File tabs */}
@@ -1627,23 +1811,32 @@ export function ChatSection() {
               </div>
 
               {/* Code display */}
-              <div className="flex-1 overflow-auto">
+              <div className="flex-1 overflow-auto relative">
                 {previewCodeBlocks[activePreviewBlock] && (
-                  <SyntaxHighlighter
-                    language={previewCodeBlocks[activePreviewBlock].language}
-                    style={oneDark}
-                    customStyle={{
-                      margin: 0,
-                      padding: '12px',
-                      fontSize: '11px',
-                      lineHeight: '1.6',
-                      background: 'transparent',
-                    }}
-                    showLineNumbers
-                    lineNumberStyle={{ color: '#4a5568', minWidth: '2.5em', paddingRight: '1em' }}
-                  >
-                    {previewCodeBlocks[activePreviewBlock].code}
-                  </SyntaxHighlighter>
+                  <>
+                    <button
+                      onClick={() => handleCopyCode(previewCodeBlocks[activePreviewBlock].code, previewCodeBlocks[activePreviewBlock].id)}
+                      className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-[oklch(0.15_0.03_260)] border border-[oklch(0.25_0.04_260)] text-[oklch(0.4_0.02_200)] hover:text-[#06d6a0] hover:border-[#06d6a0]/20 transition-all"
+                      title="Copiar código"
+                    >
+                      {copiedCodeId === previewCodeBlocks[activePreviewBlock].id ? <Check className="w-3.5 h-3.5 text-[#06d6a0]" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                    <SyntaxHighlighter
+                      language={previewCodeBlocks[activePreviewBlock].language}
+                      style={oneDark}
+                      customStyle={{
+                        margin: 0,
+                        padding: '12px',
+                        fontSize: '11px',
+                        lineHeight: '1.6',
+                        background: 'transparent',
+                      }}
+                      showLineNumbers
+                      lineNumberStyle={{ color: '#4a5568', minWidth: '2.5em', paddingRight: '1em' }}
+                    >
+                      {previewCodeBlocks[activePreviewBlock].code}
+                    </SyntaxHighlighter>
+                  </>
                 )}
               </div>
 
